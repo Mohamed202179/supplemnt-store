@@ -39,12 +39,24 @@ export default function InventoryPage() {
 
   return (
     <div>
-      <PageHeader title="المخزون" />
+      <PageHeader
+        title="المخزون"
+        action={
+          <Link href="/products/new" className="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-bold text-white">
+            + منتج جديد
+          </Link>
+        }
+      />
 
       <div className="space-y-3 p-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-500">إجمالي قيمة المخزون</p>
-          <p className="mt-1 text-xl font-bold text-brand-700">{formatEGP(totalValue)}</p>
+        <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
+          <div>
+            <p className="text-xs text-gray-500">إجمالي قيمة المخزون</p>
+            <p className="mt-1 text-xl font-bold text-brand-700">{formatEGP(totalValue)}</p>
+          </div>
+          <Link href="/products" className="shrink-0 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700">
+            إدارة المنتجات ←
+          </Link>
         </div>
 
         <input
@@ -57,7 +69,12 @@ export default function InventoryPage() {
         {loading ? (
           <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
         ) : filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد منتجات</p>
+          <div className="py-10 text-center">
+            <p className="text-sm text-gray-400">لا توجد منتجات بعد</p>
+            <Link href="/products/new" className="mt-3 inline-block rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white">
+              + إضافة أول منتج
+            </Link>
+          </div>
         ) : (
           <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {filtered.map((p) => (
