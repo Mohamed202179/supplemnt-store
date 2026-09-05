@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import PageHeader from "@/components/PageHeader";
 
 const items = [
+  { href: "/products", label: "المنتجات", icon: "🛍️", desc: "إضافة وتعديل المنتجات" },
   { href: "/purchases", label: "المشتريات", icon: "🛒", desc: "فواتير الشراء من الموردين" },
   { href: "/suppliers", label: "الموردين", icon: "🚚", desc: "بيانات الموردين ومديونياتهم" },
   { href: "/debts", label: "مديونيات العملاء", icon: "💰", desc: "متابعة وتحصيل الديون" },
