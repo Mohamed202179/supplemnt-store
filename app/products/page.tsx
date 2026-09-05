@@ -112,18 +112,31 @@ export default function ProductsPage() {
         ) : filtered.length === 0 ? (
           <p className="py-10 text-center text-sm text-gray-400">لا توجد منتجات مطابقة</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {filtered.map((p) => (
               <li key={p.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-3">
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-xl text-gray-300">
+                      📦
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-gray-900">{p.name}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate font-bold text-gray-900">{p.name}</p>
+                      <StockBadge status={getStockStatus(p)} />
+                    </div>
                     <p className="text-xs text-gray-400">
                       {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
                     </p>
                     <p className="mt-1 text-xs text-gray-500">{p.categories?.name || "بدون تصنيف"}</p>
                   </div>
-                  <StockBadge status={getStockStatus(p)} />
                 </div>
                 <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 text-sm">
                   <span className="text-gray-500">الكمية: <b className="text-gray-800">{p.current_stock}</b></span>
