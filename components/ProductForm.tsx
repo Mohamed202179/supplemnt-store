@@ -15,6 +15,11 @@ export default function ProductForm({ initial }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [form, setForm] = useState({
     name: initial?.name ?? "",
     category_id: initial?.category_id ?? "",
@@ -41,6 +46,51 @@ export default function ProductForm({ initial }: Props) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("اختر ملف صورة صالح (JPG, PNG...)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("حجم الصورة كبير جدًا (الحد الأقصى 5 ميجا)");
+      return;
+    }
+
+    setError("");
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function removeImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUrl(null);
+  }
+
+  async function uploadImageIfNeeded(): Promise<{ url: string | null; failed: boolean }> {
+    if (!imageFile) return { url: imageUrl, failed: false };
+
+    setUploadingImage(true);
+    const ext = imageFile.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("product-images")
+      .upload(path, imageFile, { upsert: false });
+
+    setUploadingImage(false);
+
+    if (uploadErr) {
+      return { url: null, failed: true };
+    }
+
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    return { url: data.publicUrl, failed: false };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -56,6 +106,19 @@ export default function ProductForm({ initial }: Props) {
 
     setSaving(true);
 
+    let finalImageUrl = imageUrl;
+    if (imageFile) {
+      const uploadResult = await uploadImageIfNeeded();
+      if (uploadResult.failed) {
+        setSaving(false);
+        setError("حدث خطأ أثناء رفع الصورة، حاول مرة أخرى");
+        return;
+      }
+      finalImageUrl = uploadResult.url;
+    } else if (imagePreview === null) {
+      finalImageUrl = null;
+    }
+
     const payload = {
       name: form.name.trim(),
       category_id: form.category_id || null,
@@ -68,6 +131,7 @@ export default function ProductForm({ initial }: Props) {
       current_stock: Number(form.current_stock) || 0,
       min_stock: Number(form.min_stock) || 0,
       expiry_date: form.expiry_date || null,
+      image_url: finalImageUrl,
     };
 
     let result;
@@ -97,6 +161,32 @@ export default function ProductForm({ initial }: Props) {
       {error && (
         <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>
       )}
+
+      <div>
+        <span className="mb-1.5 block text-xs font-semibold text-gray-600">صورة المنتج (اختياري)</span>
+        {imagePreview ? (
+          <div className="relative w-full">
+            <img
+              src={imagePreview}
+              alt="معاينة المنتج"
+              className="h-40 w-full rounded-xl border border-gray-200 object-cover"
+            />
+            <button
+              type="button"
+              onClick={removeImage}
+              className="absolute left-2 top-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-red-600 shadow"
+            >
+              إزالة
+            </button>
+          </div>
+        ) : (
+          <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400">
+            <span className="text-2xl">📷</span>
+            <span className="text-xs font-semibold">اضغط لإضافة صورة</span>
+            <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+          </label>
+        )}
+      </div>
 
       <Field label="اسم المنتج *">
         <input
@@ -195,10 +285,10 @@ export default function ProductForm({ initial }: Props) {
 
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || uploadingImage}
         className="w-full rounded-xl bg-brand-600 py-3.5 text-base font-bold text-white shadow-sm active:bg-brand-700 disabled:opacity-60"
       >
-        {saving ? "جارِ الحفظ..." : initial ? "حفظ التعديلات" : "إضافة المنتج"}
+        {uploadingImage ? "جارِ رفع الصورة..." : saving ? "جارِ الحفظ..." : initial ? "حفظ التعديلات" : "إضافة المنتج"}
       </button>
 
       <style jsx global>{`
