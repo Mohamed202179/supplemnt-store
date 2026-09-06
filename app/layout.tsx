@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AuthGate from "@/components/AuthGate";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { LanguageProvider } from "@/components/LanguageProvider";
 
 export const metadata: Metadata = {
   title: "Daily Dose Supplements",
@@ -30,8 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body className="font-sans antialiased">
-        <AuthGate>{children}</AuthGate>
-        <ServiceWorkerRegister />
+        <LanguageProvider>
+          <AuthGate>{children}</AuthGate>
+          <ServiceWorkerRegister />
+        </LanguageProvider>
       </body>
     </html>
   );
