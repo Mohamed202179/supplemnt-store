@@ -38,10 +38,12 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col justify-center bg-gray-50 px-6">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-2xl text-white">
-            💊
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">متجر المكملات الغذائية</h1>
+          <img
+            src="/icons/icon-512.png"
+            alt="Daily Dose Supplements"
+            className="mx-auto mb-3 h-20 w-20 rounded-2xl object-cover shadow-sm"
+          />
+          <h1 className="text-xl font-bold text-gray-900">Daily Dose Supplements</h1>
           <p className="mt-1 text-sm text-gray-400">سجّل الدخول لإدارة المتجر</p>
         </div>
 
