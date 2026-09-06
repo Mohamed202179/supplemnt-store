@@ -18,7 +18,11 @@ export default function SalesHistoryPage() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from("sales").select("*").order("created_at", { ascending: false }).limit(200);
+    const { data } = await supabase
+      .from("sales")
+      .select("*, customers(name)")
+      .order("created_at", { ascending: false })
+      .limit(200);
     setSales((data ?? []) as Sale[]);
     setLoading(false);
   }
@@ -28,6 +32,7 @@ export default function SalesHistoryPage() {
       sales.filter((s) => {
         const matchesSearch =
           !search ||
+          (s.customers?.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
           (s.customer_name_snapshot ?? "").toLowerCase().includes(search.toLowerCase()) ||
           String(s.invoice_number).includes(search);
         const matchesStatus = statusFilter === "all" || s.status === statusFilter;
@@ -78,7 +83,7 @@ export default function SalesHistoryPage() {
                         {s.status === "cancelled" && <span className="text-xs text-red-500">(ملغاة)</span>}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {s.customer_name_snapshot || "عميل مسجل"} · {formatDateTime(s.created_at)}
+                        {s.customers?.name || s.customer_name_snapshot || "عميل نقدي"} · {formatDateTime(s.created_at)}
                       </p>
                     </div>
                     <span className="font-bold text-gray-900">{formatEGP(s.total)}</span>
