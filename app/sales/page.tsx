@@ -8,6 +8,15 @@ import { formatEGP, getStockStatus, CartLine, Customer, Product } from "@/lib/ty
 
 type Step = "customer" | "products" | "cart";
 
+// Formats a Date as "YYYY-MM-DDTHH:mm" in LOCAL time (what <input type="datetime-local">
+// expects) — using toISOString() directly would show UTC time and confuse the date.
+function toLocalDatetimeInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
 export default function SalesPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("customer");
@@ -24,6 +33,7 @@ export default function SalesPage() {
 
   const [discount, setDiscount] = useState("0");
   const [paidAmount, setPaidAmount] = useState("");
+  const [saleDate, setSaleDate] = useState(() => toLocalDatetimeInputValue(new Date()));
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState("");
 
@@ -118,13 +128,23 @@ export default function SalesPage() {
       return;
     }
 
-    // Final stock safety check right before completing.
     for (const line of cart) {
       if (line.quantity > line.product.current_stock) {
         setError(`الكمية المطلوبة من "${line.product.name}" غير متوفرة في المخزون.`);
         return;
       }
     }
+
+    const chosenDate = new Date(saleDate);
+    if (Number.isNaN(chosenDate.getTime())) {
+      setError("تاريخ العملية غير صحيح");
+      return;
+    }
+    if (chosenDate.getTime() > Date.now() + 60000) {
+      setError("لا يمكن اختيار تاريخ في المستقبل");
+      return;
+    }
+    const saleTimestamp = chosenDate.toISOString();
 
     setCompleting(true);
 
@@ -147,6 +167,7 @@ export default function SalesPage() {
         remaining_amount: remaining,
         payment_status: paymentStatus,
         profit,
+        created_at: saleTimestamp,
       })
       .select()
       .single();
@@ -157,7 +178,6 @@ export default function SalesPage() {
       return;
     }
 
-    // Insert sale items, adjust stock, and record stock movements.
     for (const line of cart) {
       await supabase.from("sale_items").insert({
         sale_id: sale.id,
@@ -179,10 +199,10 @@ export default function SalesPage() {
         reference: `فاتورة رقم ${sale.invoice_number}`,
         previous_stock: line.product.current_stock,
         new_stock: newStock,
+        created_at: saleTimestamp,
       });
     }
 
-    // Update customer debt / totals if this was a registered customer.
     if (selectedCustomer) {
       await supabase
         .from("customers")
@@ -359,6 +379,21 @@ export default function SalesPage() {
               ))}
             </ul>
           )}
+
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-gray-600">
+                تاريخ ووقت العملية (لتسجيل مبيعات قديمة بأثر رجعي)
+              </span>
+              <input
+                value={saleDate}
+                onChange={(e) => setSaleDate(e.target.value)}
+                type="datetime-local"
+                max={toLocalDatetimeInputValue(new Date())}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              />
+            </label>
+          </div>
 
           <div className="space-y-2 rounded-xl bg-white p-4 shadow-sm">
             <Row label="الإجمالي الفرعي" value={formatEGP(subtotal)} />
