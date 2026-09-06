@@ -80,11 +80,30 @@ export default function InventoryPage() {
             {filtered.map((p) => (
               <li key={p.id}>
                 <Link href={`/inventory/${p.id}`} className="block rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-bold text-gray-900">{p.name}</p>
-                    <StockBadge status={getStockStatus(p)} />
+                  <div className="flex items-start gap-3">
+                    {p.image_url ? (
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-xl text-gray-300">
+                        📦
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate font-bold text-gray-900">{p.name}</p>
+                        <StockBadge status={getStockStatus(p)} />
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">{p.categories?.name || "بدون تصنيف"}</p>
+                    </div>
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2 text-center text-xs">
                     <div className="rounded-lg bg-gray-50 py-2">
                       <p className="text-gray-400">الكمية</p>
                       <p className="mt-0.5 font-bold text-gray-800">{p.current_stock}</p>
