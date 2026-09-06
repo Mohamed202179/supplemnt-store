@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { formatEGP, PurchaseCartLine, Supplier, Product } from "@/lib/types";
+import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
 
 type Step = "supplier" | "products" | "cart";
 
@@ -17,8 +17,20 @@ export default function NewPurchasePage() {
   const [noSupplier, setNoSupplier] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [productSearch, setProductSearch] = useState("");
   const [cart, setCart] = useState<PurchaseCartLine[]>([]);
+
+  // Inline "add a brand new product" state — lets the store owner bring in
+  // something they've never stocked before, right in the middle of buying it.
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState("");
+  const [newProductSellingPrice, setNewProductSellingPrice] = useState("");
+  const [newProductQuantity, setNewProductQuantity] = useState("1");
+  const [newProductUnitCost, setNewProductUnitCost] = useState("");
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [newProductError, setNewProductError] = useState("");
 
   const [discount, setDiscount] = useState("0");
   const [paidAmount, setPaidAmount] = useState("");
@@ -33,6 +45,7 @@ export default function NewPurchasePage() {
       .eq("is_active", true)
       .order("name")
       .then(({ data }) => setProducts((data ?? []) as Product[]));
+    supabase.from("categories").select("*").order("name").then(({ data }) => setCategories((data ?? []) as Category[]));
   }, []);
 
   const filteredSuppliers = useMemo(
@@ -91,6 +104,61 @@ export default function NewPurchasePage() {
 
   function removeLine(productId: string) {
     setCart((prev) => prev.filter((l) => l.product.id !== productId));
+  }
+
+  async function createNewProductAndAdd(e: React.FormEvent) {
+    e.preventDefault();
+    setNewProductError("");
+
+    if (!newProductName.trim()) {
+      setNewProductError("اسم المنتج مطلوب");
+      return;
+    }
+    const sellingPrice = Number(newProductSellingPrice);
+    if (!sellingPrice || sellingPrice <= 0) {
+      setNewProductError("أدخل سعر بيع صحيح للمنتج (تحتاجه لاحقًا وقت البيع)");
+      return;
+    }
+    const quantity = Number(newProductQuantity);
+    if (!quantity || quantity <= 0) {
+      setNewProductError("أدخل كمية صحيحة");
+      return;
+    }
+    const unitCost = Number(newProductUnitCost) || 0;
+
+    setCreatingProduct(true);
+
+    const { data: product, error: insertErr } = await supabase
+      .from("products")
+      .insert({
+        name: newProductName.trim(),
+        category_id: newProductCategory || null,
+        selling_price: sellingPrice,
+        purchase_price: unitCost,
+        current_stock: 0, // completing the purchase will raise this to `quantity`
+        min_stock: 5,
+      })
+      .select()
+      .single();
+
+    setCreatingProduct(false);
+
+    if (insertErr || !product) {
+      setNewProductError(
+        insertErr?.message.includes("barcode") ? "هذا الباركود مستخدم بالفعل" : "حدث خطأ أثناء إضافة المنتج"
+      );
+      return;
+    }
+
+    setProducts((prev) => [...prev, product as Product]);
+    setCart((prev) => [...prev, { product: product as Product, quantity, unitCost }]);
+
+    setNewProductName("");
+    setNewProductCategory("");
+    setNewProductSellingPrice("");
+    setNewProductQuantity("1");
+    setNewProductUnitCost("");
+    setShowNewProductForm(false);
   }
 
   async function completePurchase() {
@@ -230,7 +298,7 @@ export default function NewPurchasePage() {
       )}
 
       {step === "products" && (
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 p-4 pb-24">
           <input
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
@@ -238,6 +306,85 @@ export default function NewPurchasePage() {
             className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
             autoFocus
           />
+
+          {!showNewProductForm ? (
+            <button
+              onClick={() => setShowNewProductForm(true)}
+              className="w-full rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 py-3 text-sm font-bold text-brand-700"
+            >
+              مش لاقي المنتج؟ + أضف منتج جديد الآن
+            </button>
+          ) : (
+            <form onSubmit={createNewProductAndAdd} className="space-y-2 rounded-xl border border-brand-200 bg-brand-50 p-3">
+              <p className="text-xs font-bold text-brand-700">إضافة منتج جديد لأول مرة</p>
+              {newProductError && <p className="text-xs text-red-600">{newProductError}</p>}
+              <input
+                value={newProductName}
+                onChange={(e) => setNewProductName(e.target.value)}
+                placeholder="اسم المنتج *"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              />
+              <select
+                value={newProductCategory}
+                onChange={(e) => setNewProductCategory(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              >
+                <option value="">بدون تصنيف</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={newProductQuantity}
+                  onChange={(e) => setNewProductQuantity(e.target.value)}
+                  type="number"
+                  inputMode="decimal"
+                  min={1}
+                  placeholder="الكمية المشتراة *"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                />
+                <input
+                  value={newProductUnitCost}
+                  onChange={(e) => setNewProductUnitCost(e.target.value)}
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.01"
+                  placeholder="سعر شراء الوحدة"
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <input
+                value={newProductSellingPrice}
+                onChange={(e) => setNewProductSellingPrice(e.target.value)}
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                placeholder="سعر البيع * (تحتاجه لاحقًا في نقطة البيع)"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={creatingProduct}
+                  className="flex-1 rounded-lg bg-brand-600 py-2 text-xs font-bold text-white disabled:opacity-60"
+                >
+                  {creatingProduct ? "جارِ الإضافة..." : "إضافة للسلة"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNewProductForm(false)}
+                  className="flex-1 rounded-lg bg-gray-100 py-2 text-xs font-bold text-gray-600"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          )}
 
           <ul className="space-y-2">
             {filteredProducts.map((p) => {
