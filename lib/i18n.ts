@@ -88,6 +88,14 @@ const ar = {
   settings_language_desc: "غيّر لغة واجهة التطبيق",
   settings_language_switch_to_en: "English",
   settings_language_switch_to_ar: "العربية",
+
+  settings_header_section: "صورة هيدر الداشبورد",
+  settings_header_desc: "الصورة التي تظهر خلف الترحيب أعلى الرئيسية",
+  settings_header_upload_button: "رفع / تغيير الصورة",
+  settings_header_uploading: "جارِ الرفع...",
+  settings_header_success: "تم تحديث صورة الهيدر ✓",
+  settings_header_error: "حدث خطأ أثناء رفع الصورة، حاول مرة أخرى",
+  settings_header_remove: "إزالة الصورة (الرجوع للخلفية الافتراضية)",
 } as const;
 
 const en: Record<keyof typeof ar, string> = {
@@ -170,6 +178,14 @@ const en: Record<keyof typeof ar, string> = {
   settings_language_desc: "Change the app's display language",
   settings_language_switch_to_en: "English",
   settings_language_switch_to_ar: "العربية",
+
+  settings_header_section: "Dashboard Header Image",
+  settings_header_desc: "The image shown behind the welcome banner on the home screen",
+  settings_header_upload_button: "Upload / Change Image",
+  settings_header_uploading: "Uploading...",
+  settings_header_success: "Header image updated ✓",
+  settings_header_error: "An error occurred while uploading the image, try again",
+  settings_header_remove: "Remove image (revert to default background)",
 };
 
 export const translations = { ar, en };
