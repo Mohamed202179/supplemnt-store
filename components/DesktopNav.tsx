@@ -8,6 +8,7 @@ const items = [
   { href: "/", label: "الرئيسية" },
   { href: "/sales", label: "المبيعات" },
   { href: "/inventory", label: "المخزون" },
+  { href: "/products", label: "المنتجات" },
   { href: "/customers", label: "العملاء" },
   { href: "/debts", label: "المديونيات" },
   { href: "/purchases", label: "المشتريات" },
@@ -15,6 +16,7 @@ const items = [
   { href: "/expenses", label: "المصروفات" },
   { href: "/reports", label: "التقارير" },
   { href: "/categories", label: "التصنيفات" },
+  { href: "/settings", label: "الإعدادات" },
 ];
 
 export default function DesktopNav() {
@@ -29,7 +31,10 @@ export default function DesktopNav() {
   return (
     <nav className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white md:block">
       <div className="mx-auto flex max-w-5xl items-center gap-1 overflow-x-auto px-4 py-2">
-        <span className="ml-2 shrink-0 text-sm font-bold text-brand-700">💊 متجر المكملات</span>
+        <span className="ml-2 flex shrink-0 items-center gap-1.5 text-sm font-bold text-brand-700">
+          <img src="/icons/icon-192.png" alt="Daily Dose" className="h-6 w-6 rounded-md object-cover" />
+          Daily Dose
+        </span>
         {items.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
