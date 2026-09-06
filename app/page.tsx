@@ -46,7 +46,11 @@ export default function DashboardPage() {
         .gte("created_at", startOfDay.toISOString()),
       supabase.from("products").select("*").eq("is_active", true),
       supabase.from("customers").select("current_debt"),
-      supabase.from("sales").select("*").order("created_at", { ascending: false }).limit(5),
+      supabase
+        .from("sales")
+        .select("*, customers(name)")
+        .order("created_at", { ascending: false })
+        .limit(5),
       supabase
         .from("sales")
         .select("profit")
@@ -166,7 +170,7 @@ export default function DashboardPage() {
                         <Link href={`/sales/${s.id}`} className="flex items-center justify-between py-2 text-sm">
                           <div>
                             <p className="font-medium text-gray-800">
-                              {s.customer_name_snapshot || "عميل مسجل"}{" "}
+                              {s.customers?.name || s.customer_name_snapshot || "عميل نقدي"}{" "}
                               {s.status === "cancelled" && (
                                 <span className="text-xs text-red-500">(ملغاة)</span>
                               )}
