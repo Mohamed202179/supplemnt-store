@@ -33,7 +33,7 @@ export default function InventoryPage() {
   );
 
   const totalValue = useMemo(
-    () => products.reduce((sum, p) => sum + p.current_stock * p.selling_price, 0),
+    () => products.reduce((sum, p) => sum + p.current_stock * p.purchase_price, 0),
     [products]
   );
 
@@ -51,7 +51,7 @@ export default function InventoryPage() {
       <div className="space-y-3 p-4">
         <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
           <div>
-            <p className="text-xs text-gray-500">إجمالي قيمة المخزون</p>
+            <p className="text-xs text-gray-500">إجمالي قيمة المخزون (بسعر الشراء)</p>
             <p className="mt-1 text-xl font-bold text-brand-700">{formatEGP(totalValue)}</p>
           </div>
           <Link href="/products" className="shrink-0 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700">
