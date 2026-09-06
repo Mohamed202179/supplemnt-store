@@ -5,12 +5,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Brand palette sampled directly from the Daily Dose logo
+        // (deep navy/indigo gradient, white mark).
         brand: {
-          50: "#eefdf6",
-          100: "#d6f9e7",
-          500: "#12a05a",
-          600: "#0e8a4c",
-          700: "#0b6e3d",
+          50: "#eef0fb",
+          100: "#dbdff7",
+          500: "#4641d2",
+          600: "#302cb7",
+          700: "#24219c",
         },
       },
       fontFamily: {
