@@ -70,6 +70,7 @@ export interface Sale {
   profit: number;
   created_at: string;
   cancelled_at: string | null;
+  customers?: { name: string } | null;
 }
 
 export interface SaleItem {
