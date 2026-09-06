@@ -88,9 +88,17 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="bg-brand-600 px-4 pb-8 pt-4 text-white md:rounded-2xl md:mt-4 md:mx-4">
+      <div
+        className="relative overflow-hidden px-4 pb-10 pt-6 text-white md:mx-4 md:mt-4 md:rounded-2xl"
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(48,44,183,0.8)), url('/header-banner.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <p className="text-sm opacity-90">أهلاً بك 👋</p>
-        <h1 className="text-xl font-bold">متجر المكملات الغذائية</h1>
+        <h1 className="text-xl font-bold">Daily Dose Supplements</h1>
       </div>
 
       <div className="-mt-5 space-y-4 px-4 md:mt-4">
