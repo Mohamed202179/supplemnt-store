@@ -149,6 +149,12 @@ export interface Expense {
   created_at: string;
 }
 
+export interface AppSettings {
+  id: number;
+  header_image_url: string | null;
+  updated_at: string;
+}
+
 export interface StockMovement {
   id: string;
   product_id: string;
