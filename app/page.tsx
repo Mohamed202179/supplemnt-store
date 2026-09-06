@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, formatDate, Product, Sale } from "@/lib/types";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface DashboardData {
   todaySales: number;
@@ -17,6 +18,7 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const { t, lang } = useLanguage();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,39 +99,39 @@ export default function DashboardPage() {
           backgroundPosition: "center",
         }}
       >
-        <p className="text-sm opacity-90">أهلاً بك 👋</p>
+        <p className="text-sm opacity-90">{t("dashboard_welcome")} 👋</p>
         <h1 className="text-xl font-bold">Daily Dose Supplements</h1>
       </div>
 
       <div className="-mt-5 space-y-4 px-4 md:mt-4">
         {loading || !data ? (
           <div className="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm">
-            جارِ التحميل...
+            {t("loading")}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <StatCard
                 href="/sales/history"
-                label="مبيعات اليوم"
-                value={formatEGP(data.todaySales)}
-                sub={`${data.todayInvoices} فاتورة`}
+                label={t("stat_today_sales")}
+                value={formatEGP(data.todaySales, lang)}
+                sub={`${data.todayInvoices} ${t("stat_invoices_suffix")}`}
               />
-              <StatCard href="/inventory" label="قيمة المخزون (تكلفة)" value={formatEGP(data.inventoryValue)} />
-              <StatCard href="/debts" label="إجمالي المديونيات" value={formatEGP(data.totalDebts)} tone="warn" />
+              <StatCard href="/inventory" label={t("stat_inventory_value")} value={formatEGP(data.inventoryValue, lang)} />
+              <StatCard href="/debts" label={t("stat_total_debts")} value={formatEGP(data.totalDebts, lang)} tone="warn" />
               <StatCard
                 href="/inventory"
-                label="منتجات قليلة المخزون"
+                label={t("stat_low_stock")}
                 value={String(data.lowStockProducts.length)}
                 tone={data.lowStockProducts.length ? "danger" : "default"}
               />
               <StatCard
                 href="/reports"
-                label="صافي ربح الشهر"
-                value={formatEGP(data.monthProfit)}
+                label={t("stat_month_profit")}
+                value={formatEGP(data.monthProfit, lang)}
                 tone={data.monthProfit >= 0 ? "default" : "danger"}
               />
-              <StatCard href="/expenses" label="مصروفات الشهر" value={formatEGP(data.monthExpenses)} tone="warn" />
+              <StatCard href="/expenses" label={t("stat_month_expenses")} value={formatEGP(data.monthExpenses, lang)} tone="warn" />
             </div>
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -137,20 +139,20 @@ export default function DashboardPage() {
                 href="/sales"
                 className="block w-full rounded-2xl bg-brand-600 py-4 text-center text-base font-bold text-white shadow-sm active:bg-brand-700"
               >
-                + بيع جديد
+                {t("btn_new_sale")}
               </Link>
               <Link
                 href="/purchases/new"
                 className="block w-full rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50"
               >
-                + شراء جديد
+                {t("btn_new_purchase")}
               </Link>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {data.lowStockProducts.length > 0 && (
                 <section className="rounded-2xl bg-white p-4 shadow-sm">
-                  <h2 className="mb-2 text-sm font-bold text-gray-900">منتجات قليلة المخزون</h2>
+                  <h2 className="mb-2 text-sm font-bold text-gray-900">{t("stat_low_stock")}</h2>
                   <ul className="divide-y divide-gray-100">
                     {data.lowStockProducts.slice(0, 5).map((p) => (
                       <li key={p.id}>
@@ -162,15 +164,15 @@ export default function DashboardPage() {
                     ))}
                   </ul>
                   <Link href="/inventory" className="mt-2 block text-center text-xs font-semibold text-brand-600">
-                    عرض كل المخزون ←
+                    {t("view_all_inventory")}
                   </Link>
                 </section>
               )}
 
               <section className="rounded-2xl bg-white p-4 shadow-sm">
-                <h2 className="mb-2 text-sm font-bold text-gray-900">آخر عمليات البيع</h2>
+                <h2 className="mb-2 text-sm font-bold text-gray-900">{t("section_recent_sales")}</h2>
                 {data.recentSales.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-gray-400">لا توجد مبيعات بعد</p>
+                  <p className="py-4 text-center text-sm text-gray-400">{t("no_sales_yet")}</p>
                 ) : (
                   <ul className="divide-y divide-gray-100">
                     {data.recentSales.map((s) => (
@@ -178,21 +180,21 @@ export default function DashboardPage() {
                         <Link href={`/sales/${s.id}`} className="flex items-center justify-between py-2 text-sm">
                           <div>
                             <p className="font-medium text-gray-800">
-                              {s.customers?.name || s.customer_name_snapshot || "عميل نقدي"}{" "}
+                              {s.customers?.name || s.customer_name_snapshot || t("cash_customer")}{" "}
                               {s.status === "cancelled" && (
-                                <span className="text-xs text-red-500">(ملغاة)</span>
+                                <span className="text-xs text-red-500">{t("cancelled_label")}</span>
                               )}
                             </p>
                             <p className="text-xs text-gray-400">{formatDate(s.created_at)}</p>
                           </div>
-                          <span className="font-bold text-gray-900">{formatEGP(s.total)}</span>
+                          <span className="font-bold text-gray-900">{formatEGP(s.total, lang)}</span>
                         </Link>
                       </li>
                     ))}
                   </ul>
                 )}
                 <Link href="/sales/history" className="mt-2 block text-center text-xs font-semibold text-brand-600">
-                  عرض كل المبيعات ←
+                  {t("view_all_sales")}
                 </Link>
               </section>
             </div>
