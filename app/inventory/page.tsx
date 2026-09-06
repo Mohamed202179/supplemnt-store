@@ -113,8 +113,8 @@ export default function InventoryPage() {
                       <p className="mt-0.5 font-bold text-gray-800">{p.min_stock}</p>
                     </div>
                     <div className="rounded-lg bg-gray-50 py-2">
-                      <p className="text-gray-400">سعر البيع</p>
-                      <p className="mt-0.5 font-bold text-gray-800">{formatEGP(p.selling_price)}</p>
+                      <p className="text-gray-400">الإجمالي (سعر الشراء)</p>
+                      <p className="mt-0.5 font-bold text-brand-700">{formatEGP(p.current_stock * p.purchase_price)}</p>
                     </div>
                   </div>
                 </Link>
