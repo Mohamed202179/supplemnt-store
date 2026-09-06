@@ -96,9 +96,9 @@ export default function ProductStockPage({ params }: { params: { id: string } })
               <p className="mt-0.5 text-sm font-bold text-gray-900">{product.min_stock}</p>
             </div>
             <div className="rounded-lg bg-gray-50 py-2">
-              <p className="text-gray-400">قيمة المخزون منه</p>
+              <p className="text-gray-400">قيمة المخزون منه (بسعر الشراء)</p>
               <p className="mt-0.5 text-sm font-bold text-gray-900">
-                {formatEGP(product.current_stock * product.selling_price)}
+                {formatEGP(product.current_stock * product.purchase_price)}
               </p>
             </div>
           </div>
