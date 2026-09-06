@@ -58,8 +58,10 @@ export default function DashboardPage() {
     const todaySales = (todaySalesData ?? []).reduce((sum, s: any) => sum + Number(s.total), 0);
     const todayInvoices = (todaySalesData ?? []).length;
     const allProducts = (products ?? []) as Product[];
+    // Inventory value uses cost (purchase price), not selling price —
+    // this reflects money actually tied up in stock, not potential revenue.
     const inventoryValue = allProducts.reduce(
-      (sum, p) => sum + Number(p.selling_price) * Number(p.current_stock),
+      (sum, p) => sum + Number(p.purchase_price) * Number(p.current_stock),
       0
     );
     const totalDebts = (customers ?? []).reduce((sum, c: any) => sum + Number(c.current_debt), 0);
@@ -95,20 +97,27 @@ export default function DashboardPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <StatCard label="مبيعات اليوم" value={formatEGP(data.todaySales)} sub={`${data.todayInvoices} فاتورة`} />
-              <StatCard label="قيمة المخزون" value={formatEGP(data.inventoryValue)} />
-              <StatCard label="إجمالي المديونيات" value={formatEGP(data.totalDebts)} tone="warn" />
               <StatCard
+                href="/sales/history"
+                label="مبيعات اليوم"
+                value={formatEGP(data.todaySales)}
+                sub={`${data.todayInvoices} فاتورة`}
+              />
+              <StatCard href="/inventory" label="قيمة المخزون (تكلفة)" value={formatEGP(data.inventoryValue)} />
+              <StatCard href="/debts" label="إجمالي المديونيات" value={formatEGP(data.totalDebts)} tone="warn" />
+              <StatCard
+                href="/inventory"
                 label="منتجات قليلة المخزون"
                 value={String(data.lowStockProducts.length)}
                 tone={data.lowStockProducts.length ? "danger" : "default"}
               />
               <StatCard
+                href="/reports"
                 label="صافي ربح الشهر"
                 value={formatEGP(data.monthProfit)}
                 tone={data.monthProfit >= 0 ? "default" : "danger"}
               />
-              <StatCard label="مصروفات الشهر" value={formatEGP(data.monthExpenses)} tone="warn" />
+              <StatCard href="/expenses" label="مصروفات الشهر" value={formatEGP(data.monthExpenses)} tone="warn" />
             </div>
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -132,9 +141,11 @@ export default function DashboardPage() {
                   <h2 className="mb-2 text-sm font-bold text-gray-900">منتجات قليلة المخزون</h2>
                   <ul className="divide-y divide-gray-100">
                     {data.lowStockProducts.slice(0, 5).map((p) => (
-                      <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                        <span className="text-gray-700">{p.name}</span>
-                        <span className="font-semibold text-amber-600">{p.current_stock}</span>
+                      <li key={p.id}>
+                        <Link href={`/inventory/${p.id}`} className="flex items-center justify-between py-2 text-sm">
+                          <span className="text-gray-700">{p.name}</span>
+                          <span className="font-semibold text-amber-600">{p.current_stock}</span>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -181,11 +192,13 @@ export default function DashboardPage() {
 }
 
 function StatCard({
+  href,
   label,
   value,
   sub,
   tone = "default",
 }: {
+  href: string;
   label: string;
   value: string;
   sub?: string;
@@ -194,10 +207,10 @@ function StatCard({
   const toneClass =
     tone === "warn" ? "text-amber-600" : tone === "danger" ? "text-red-600" : "text-gray-900";
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm">
+    <Link href={href} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50">
       <p className="text-xs text-gray-500">{label}</p>
       <p className={`mt-1 text-lg font-bold ${toneClass}`}>{value}</p>
       {sub && <p className="mt-0.5 text-[11px] text-gray-400">{sub}</p>}
-    </div>
+    </Link>
   );
 }
