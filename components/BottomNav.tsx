@@ -11,7 +11,7 @@ const items = [
   { href: "/more", label: "المزيد", icon: "☰" },
 ];
 
-const morePrefixes = ["/more", "/purchases", "/suppliers", "/expenses", "/reports", "/debts", "/categories"];
+const morePrefixes = ["/more", "/purchases", "/suppliers", "/expenses", "/reports", "/debts", "/categories", "/products", "/settings"];
 
 export default function BottomNav() {
   const pathname = usePathname();
