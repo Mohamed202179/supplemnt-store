@@ -111,8 +111,11 @@ export default function ReportsPage() {
     setLoading(false);
   }
 
+  // Inventory value uses cost (purchase price) — consistent with the
+  // dashboard and inventory page, since this represents money tied up
+  // in stock, not potential sale revenue.
   const inventoryValue = useMemo(
-    () => products.reduce((sum, p) => sum + p.selling_price * p.current_stock, 0),
+    () => products.reduce((sum, p) => sum + p.purchase_price * p.current_stock, 0),
     [products]
   );
   const lowStock = useMemo(() => products.filter((p) => getStockStatus(p) === "low"), [products]);
@@ -198,7 +201,7 @@ export default function ReportsPage() {
             <section className="rounded-2xl bg-white p-4 shadow-sm">
               <h2 className="mb-3 text-sm font-bold text-gray-900">المخزون</h2>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <MiniStat label="قيمة المخزون" value={formatEGP(inventoryValue)} />
+                <MiniStat label="قيمة المخزون (تكلفة)" value={formatEGP(inventoryValue)} />
                 <MiniStat label="مخزون منخفض" value={String(lowStock.length)} tone={lowStock.length ? "warn" : "default"} />
                 <MiniStat label="نفذ من المخزون" value={String(outOfStock.length)} tone={outOfStock.length ? "danger" : "default"} />
               </div>
