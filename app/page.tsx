@@ -21,9 +21,16 @@ export default function DashboardPage() {
   const { t, lang } = useLanguage();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     load();
+    supabase
+      .from("app_settings")
+      .select("header_image_url")
+      .eq("id", 1)
+      .single()
+      .then(({ data }) => setHeaderImageUrl((data as any)?.header_image_url ?? null));
   }, []);
 
   async function load() {
@@ -93,8 +100,9 @@ export default function DashboardPage() {
       <div
         className="relative overflow-hidden px-4 pb-10 pt-6 text-white md:mx-4 md:mt-4 md:rounded-2xl"
         style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(48,44,183,0.8)), url('/header-banner.jpg')",
+          backgroundImage: headerImageUrl
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(48,44,183,0.8)), url('${headerImageUrl}')`
+            : "linear-gradient(135deg, #302cb7, #4641d2)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
