@@ -13,6 +13,7 @@ const items = [
   { href: "/expenses", label: "المصروفات", icon: "🧾", desc: "إيجار، كهرباء، رواتب وغيرها" },
   { href: "/reports", label: "التقارير", icon: "📊", desc: "المبيعات، الأرباح، المخزون" },
   { href: "/categories", label: "التصنيفات", icon: "🏷️", desc: "إدارة تصنيفات المنتجات" },
+  { href: "/settings", label: "الإعدادات", icon: "⚙️", desc: "تغيير كلمة المرور" },
 ];
 
 export default function MorePage() {
