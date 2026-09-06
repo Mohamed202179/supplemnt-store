@@ -4,8 +4,8 @@ import AuthGate from "@/components/AuthGate";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "متجر المكملات الغذائية",
-  description: "نظام إدارة متجر المكملات الغذائية",
+  title: "Daily Dose Supplements",
+  description: "نظام إدارة متجر Daily Dose Supplements",
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192.png",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "متجر المكملات",
+    title: "Daily Dose",
   },
 };
 
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0e8a4c",
+  themeColor: "#302cb7",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
