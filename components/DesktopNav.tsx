@@ -3,25 +3,28 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { useLanguage } from "@/components/LanguageProvider";
+import { TranslationKey } from "@/lib/i18n";
 
-const items = [
-  { href: "/", label: "الرئيسية" },
-  { href: "/sales", label: "المبيعات" },
-  { href: "/inventory", label: "المخزون" },
-  { href: "/products", label: "المنتجات" },
-  { href: "/customers", label: "العملاء" },
-  { href: "/debts", label: "المديونيات" },
-  { href: "/purchases", label: "المشتريات" },
-  { href: "/suppliers", label: "الموردين" },
-  { href: "/expenses", label: "المصروفات" },
-  { href: "/reports", label: "التقارير" },
-  { href: "/categories", label: "التصنيفات" },
-  { href: "/settings", label: "الإعدادات" },
+const items: { href: string; labelKey: TranslationKey }[] = [
+  { href: "/", labelKey: "nav_home" },
+  { href: "/sales", labelKey: "nav_sales" },
+  { href: "/inventory", labelKey: "nav_inventory" },
+  { href: "/products", labelKey: "nav_products" },
+  { href: "/customers", labelKey: "nav_customers" },
+  { href: "/debts", labelKey: "nav_debts" },
+  { href: "/purchases", labelKey: "nav_purchases" },
+  { href: "/suppliers", labelKey: "nav_suppliers" },
+  { href: "/expenses", labelKey: "nav_expenses" },
+  { href: "/reports", labelKey: "nav_reports" },
+  { href: "/categories", labelKey: "nav_categories" },
+  { href: "/settings", labelKey: "nav_settings" },
 ];
 
 export default function DesktopNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function logout() {
     await supabase.auth.signOut();
@@ -45,7 +48,7 @@ export default function DesktopNav() {
                 active ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -53,7 +56,7 @@ export default function DesktopNav() {
           onClick={logout}
           className="mr-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
         >
-          تسجيل الخروج
+          {t("logout")}
         </button>
       </div>
     </nav>
