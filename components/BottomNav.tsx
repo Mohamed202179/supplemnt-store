@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/components/LanguageProvider";
+import { TranslationKey } from "@/lib/i18n";
 
-const items = [
-  { href: "/", label: "الرئيسية", icon: "🏠" },
-  { href: "/sales", label: "المبيعات", icon: "🧾" },
-  { href: "/inventory", label: "المخزون", icon: "📦" },
-  { href: "/customers", label: "العملاء", icon: "👥" },
-  { href: "/more", label: "المزيد", icon: "☰" },
+const items: { href: string; labelKey: TranslationKey; icon: string }[] = [
+  { href: "/", labelKey: "nav_home", icon: "🏠" },
+  { href: "/sales", labelKey: "nav_sales", icon: "🧾" },
+  { href: "/inventory", labelKey: "nav_inventory", icon: "📦" },
+  { href: "/customers", labelKey: "nav_customers", icon: "👥" },
+  { href: "/more", labelKey: "nav_more", icon: "☰" },
 ];
 
 const morePrefixes = ["/more", "/purchases", "/suppliers", "/expenses", "/reports", "/debts", "/categories", "/products", "/settings"];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-md border-t border-gray-200 bg-white safe-bottom md:hidden">
@@ -37,7 +40,7 @@ export default function BottomNav() {
                 }`}
               >
                 <span className="text-xl leading-none">{item.icon}</span>
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             </li>
           );
