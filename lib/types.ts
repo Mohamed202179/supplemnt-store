@@ -193,8 +193,11 @@ export function getStockStatus(product: Pick<Product, "current_stock" | "min_sto
   return "available";
 }
 
-export function formatEGP(amount: number): string {
+export function formatEGP(amount: number, lang: "ar" | "en" = "ar"): string {
   const rounded = Math.round((amount + Number.EPSILON) * 100) / 100;
+  if (lang === "en") {
+    return `${rounded.toLocaleString("en-US", { maximumFractionDigits: 2 })} EGP`;
+  }
   return `${rounded.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} ج.م`;
 }
 
