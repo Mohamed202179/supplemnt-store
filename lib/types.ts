@@ -155,6 +155,15 @@ export interface AppSettings {
   updated_at: string;
 }
 
+export type UserRole = "owner" | "cashier";
+
+export interface Profile {
+  id: string;
+  role: UserRole;
+  full_name: string | null;
+  created_at: string;
+}
+
 export interface StockMovement {
   id: string;
   product_id: string;
