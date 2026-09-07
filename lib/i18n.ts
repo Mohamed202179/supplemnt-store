@@ -89,6 +89,12 @@ const ar = {
   settings_language_switch_to_en: "English",
   settings_language_switch_to_ar: "العربية",
 
+  settings_theme_section: "مظهر التطبيق",
+  settings_theme_desc: "اختر شكل الواجهة",
+  theme_light: "فاتح",
+  theme_dark: "داكن",
+  theme_system: "تلقائي (حسب الجهاز)",
+
   settings_header_section: "صورة هيدر الداشبورد",
   settings_header_desc: "الصورة التي تظهر خلف الترحيب أعلى الرئيسية",
   settings_header_upload_button: "رفع / تغيير الصورة",
@@ -182,6 +188,12 @@ const en: Record<keyof typeof ar, string> = {
   settings_language_desc: "Change the app's display language",
   settings_language_switch_to_en: "English",
   settings_language_switch_to_ar: "العربية",
+
+  settings_theme_section: "App Appearance",
+  settings_theme_desc: "Choose how the interface looks",
+  theme_light: "Light",
+  theme_dark: "Dark",
+  theme_system: "Automatic (match device)",
 
   settings_header_section: "Dashboard Header Image",
   settings_header_desc: "The image shown behind the welcome banner on the home screen",
