@@ -125,7 +125,7 @@ export default function DashboardPage() {
 
       <div className="-mt-5 space-y-4 px-4 md:mt-4">
         {loading || !data ? (
-          <div className="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm">
+          <div className="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500">
             {t("loading")}
           </div>
         ) : (
@@ -166,7 +166,7 @@ export default function DashboardPage() {
               {isOwner && (
                 <Link
                   href="/purchases/new"
-                  className="block w-full rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50"
+                  className="block w-full rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800"
                 >
                   {t("btn_new_purchase")}
                 </Link>
@@ -175,13 +175,13 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {data.lowStockProducts.length > 0 && (
-                <section className="rounded-2xl bg-white p-4 shadow-sm">
-                  <h2 className="mb-2 text-sm font-bold text-gray-900">{t("stat_low_stock")}</h2>
-                  <ul className="divide-y divide-gray-100">
+                <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+                  <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">{t("stat_low_stock")}</h2>
+                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                     {data.lowStockProducts.slice(0, 5).map((p) => (
                       <li key={p.id}>
                         <Link href={`/inventory/${p.id}`} className="flex items-center justify-between py-2 text-sm">
-                          <span className="text-gray-700">{p.name}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{p.name}</span>
                           <span className="font-semibold text-amber-600">{p.current_stock}</span>
                         </Link>
                       </li>
@@ -194,9 +194,9 @@ export default function DashboardPage() {
               )}
 
               {data.expiringProducts.length > 0 && (
-                <section className="rounded-2xl bg-white p-4 shadow-sm">
-                  <h2 className="mb-2 text-sm font-bold text-gray-900">{t("section_expiring_products")}</h2>
-                  <ul className="divide-y divide-gray-100">
+                <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+                  <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">{t("section_expiring_products")}</h2>
+                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                     {data.expiringProducts.slice(0, 5).map((p) => {
                       const daysLeft = Math.ceil(
                         (new Date(p.expiry_date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                       return (
                         <li key={p.id}>
                           <Link href={`/inventory/${p.id}`} className="flex items-center justify-between py-2 text-sm">
-                            <span className="text-gray-700">{p.name}</span>
+                            <span className="text-gray-700 dark:text-gray-300">{p.name}</span>
                             <span className={`font-semibold ${expired ? "text-red-600" : "text-amber-600"}`}>
                               {expired ? t("expired_now") : `${daysLeft} ${t("days_remaining_suffix")}`}
                             </span>
@@ -217,25 +217,25 @@ export default function DashboardPage() {
                 </section>
               )}
 
-              <section className="rounded-2xl bg-white p-4 shadow-sm">
-                <h2 className="mb-2 text-sm font-bold text-gray-900">{t("section_recent_sales")}</h2>
+              <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+                <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">{t("section_recent_sales")}</h2>
                 {data.recentSales.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-gray-400">{t("no_sales_yet")}</p>
+                  <p className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">{t("no_sales_yet")}</p>
                 ) : (
-                  <ul className="divide-y divide-gray-100">
+                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                     {data.recentSales.map((s) => (
                       <li key={s.id}>
                         <Link href={`/sales/${s.id}`} className="flex items-center justify-between py-2 text-sm">
                           <div>
-                            <p className="font-medium text-gray-800">
+                            <p className="font-medium text-gray-800 dark:text-gray-200">
                               {s.customers?.name || s.customer_name_snapshot || t("cash_customer")}{" "}
                               {s.status === "cancelled" && (
                                 <span className="text-xs text-red-500">{t("cancelled_label")}</span>
                               )}
                             </p>
-                            <p className="text-xs text-gray-400">{formatDate(s.created_at)}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(s.created_at)}</p>
                           </div>
-                          <span className="font-bold text-gray-900">{formatEGP(s.total, lang)}</span>
+                          <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(s.total, lang)}</span>
                         </Link>
                       </li>
                     ))}
@@ -267,12 +267,16 @@ function StatCard({
   tone?: "default" | "warn" | "danger";
 }) {
   const toneClass =
-    tone === "warn" ? "text-amber-600" : tone === "danger" ? "text-red-600" : "text-gray-900";
+    tone === "warn"
+      ? "text-amber-600 dark:text-amber-400"
+      : tone === "danger"
+      ? "text-red-600 dark:text-red-400"
+      : "text-gray-900 dark:text-gray-100";
   return (
-    <Link href={href} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50">
-      <p className="text-xs text-gray-500">{label}</p>
+    <Link href={href} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800">
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
       <p className={`mt-1 text-lg font-bold ${toneClass}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-[11px] text-gray-400">{sub}</p>}
+      {sub && <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">{sub}</p>}
     </Link>
   );
 }
