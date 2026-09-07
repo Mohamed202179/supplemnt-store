@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
+import OwnerGate from "@/components/OwnerGate";
 
 type Step = "supplier" | "products" | "cart";
 
-export default function NewPurchasePage() {
+function NewPurchasePageContent() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("supplier");
 
@@ -545,5 +546,13 @@ function Row({ label, value, bold, tone }: { label: string; value: string; bold?
         {value}
       </span>
     </div>
+  );
+}
+
+export default function NewPurchasePage() {
+  return (
+    <OwnerGate>
+      <NewPurchasePageContent />
+    </OwnerGate>
   );
 }
