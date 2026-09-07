@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Purchase, PurchaseItem, formatEGP, formatDateTime, paymentStatusLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function PurchaseDetailPage({ params }: { params: { id: string } }) {
+function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +35,6 @@ export default function PurchaseDetailPage({ params }: { params: { id: string } 
     setError("");
     setCancelling(true);
 
-    // Safety check: make sure cancelling won't push any product's stock negative
-    // (i.e. some of the purchased quantity has already been resold).
     for (const item of items) {
       if (!item.product_id) continue;
       const { data: product } = await supabase
@@ -169,5 +168,13 @@ function Row({ label, value, bold, tone }: { label: string; value: string; bold?
         {value}
       </span>
     </div>
+  );
+}
+
+export default function PurchaseDetailPage({ params }: { params: { id: string } }) {
+  return (
+    <OwnerGate>
+      <PurchaseDetailPageContent params={params} />
+    </OwnerGate>
   );
 }
