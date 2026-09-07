@@ -5,8 +5,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, Supplier } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function SuppliersPage() {
+function SuppliersPageContent() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -269,5 +270,13 @@ export default function SuppliersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SuppliersPage() {
+  return (
+    <OwnerGate>
+      <SuppliersPageContent />
+    </OwnerGate>
   );
 }
