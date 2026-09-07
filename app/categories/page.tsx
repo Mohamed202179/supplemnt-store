@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Category } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function CategoriesPage() {
+function CategoriesPageContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -133,5 +134,13 @@ export default function CategoriesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CategoriesPage() {
+  return (
+    <OwnerGate>
+      <CategoriesPageContent />
+    </OwnerGate>
   );
 }
