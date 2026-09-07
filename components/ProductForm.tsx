@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { Category, Product } from "@/lib/types";
+import { Category, Product, ProductGroup } from "@/lib/types";
 
 interface Props {
   initial?: Product;
+  presetGroupId?: string;
 }
 
-export default function ProductForm({ initial }: Props) {
+type GroupMode = "none" | "existing" | "new";
+
+export default function ProductForm({ initial, presetGroupId }: Props) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,6 +23,11 @@ export default function ProductForm({ initial }: Props) {
   const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const initialGroupId = initial?.group_id ?? presetGroupId ?? "";
+  const [groupMode, setGroupMode] = useState<GroupMode>(initialGroupId ? "existing" : "none");
+  const [selectedGroupId, setSelectedGroupId] = useState(initialGroupId);
+  const [newGroupName, setNewGroupName] = useState("");
 
   const [form, setForm] = useState({
     name: initial?.name ?? "",
@@ -40,6 +49,11 @@ export default function ProductForm({ initial }: Props) {
       .select("*")
       .order("name")
       .then(({ data }) => setCategories((data ?? []) as Category[]));
+    supabase
+      .from("product_groups")
+      .select("*")
+      .order("name")
+      .then(({ data }) => setGroups((data ?? []) as ProductGroup[]));
   }, []);
 
   function update<K extends keyof typeof form>(key: K, value: string) {
@@ -103,6 +117,14 @@ export default function ProductForm({ initial }: Props) {
       setError("الأسعار يجب أن تكون أرقامًا صحيحة");
       return;
     }
+    if (groupMode === "new" && !newGroupName.trim()) {
+      setError("أدخل اسم المجموعة الجديدة");
+      return;
+    }
+    if (groupMode === "existing" && !selectedGroupId) {
+      setError("اختر مجموعة من القائمة");
+      return;
+    }
 
     setSaving(true);
 
@@ -119,6 +141,30 @@ export default function ProductForm({ initial }: Props) {
       finalImageUrl = null;
     }
 
+    // Resolve the group_id: create a new group first if needed.
+    let finalGroupId: string | null = null;
+    if (groupMode === "existing") {
+      finalGroupId = selectedGroupId;
+    } else if (groupMode === "new") {
+      const { data: newGroup, error: groupErr } = await supabase
+        .from("product_groups")
+        .insert({
+          name: newGroupName.trim(),
+          category_id: form.category_id || null,
+          brand: form.brand || null,
+          image_url: finalImageUrl,
+        })
+        .select()
+        .single();
+
+      if (groupErr || !newGroup) {
+        setSaving(false);
+        setError("حدث خطأ أثناء إنشاء المجموعة، حاول مرة أخرى");
+        return;
+      }
+      finalGroupId = newGroup.id;
+    }
+
     const payload = {
       name: form.name.trim(),
       category_id: form.category_id || null,
@@ -132,6 +178,7 @@ export default function ProductForm({ initial }: Props) {
       min_stock: Number(form.min_stock) || 0,
       expiry_date: form.expiry_date || null,
       image_url: finalImageUrl,
+      group_id: finalGroupId,
     };
 
     let result;
@@ -185,6 +232,72 @@ export default function ProductForm({ initial }: Props) {
             <span className="text-xs font-semibold">اضغط لإضافة صورة</span>
             <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
           </label>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+        <span className="mb-2 block text-xs font-semibold text-gray-600">
+          هل هذا المنتج له أطعمة أو أحجام مختلفة؟
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setGroupMode("none")}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+              groupMode === "none" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+            }`}
+          >
+            منتج مستقل
+          </button>
+          <button
+            type="button"
+            onClick={() => setGroupMode("existing")}
+            disabled={groups.length === 0}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold disabled:opacity-40 ${
+              groupMode === "existing" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+            }`}
+          >
+            جزء من مجموعة موجودة
+          </button>
+          <button
+            type="button"
+            onClick={() => setGroupMode("new")}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+              groupMode === "new" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+            }`}
+          >
+            + مجموعة جديدة
+          </button>
+        </div>
+
+        {groupMode === "existing" && (
+          <select
+            value={selectedGroupId}
+            onChange={(e) => setSelectedGroupId(e.target.value)}
+            className="input mt-2"
+          >
+            <option value="">اختر المجموعة...</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {groupMode === "new" && (
+          <input
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="اسم المجموعة (مثال: واي بروتين - Optimum Nutrition)"
+            className="input mt-2"
+          />
+        )}
+
+        {groupMode !== "none" && (
+          <p className="mt-2 text-[11px] text-gray-400">
+            استخدم حقلي "النكهة" و"الحجم" تحت عشان تميّز هذا الطعم/الحجم عن باقي المجموعة.
+          </p>
         )}
       </div>
 
