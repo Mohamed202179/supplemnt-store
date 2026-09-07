@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, formatDate, Product, Sale } from "@/lib/types";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useRole } from "@/components/RoleProvider";
 
 interface DashboardData {
   todaySales: number;
@@ -12,6 +13,7 @@ interface DashboardData {
   inventoryValue: number;
   totalDebts: number;
   lowStockProducts: Product[];
+  expiringProducts: Product[];
   recentSales: Sale[];
   monthProfit: number;
   monthExpenses: number;
@@ -19,6 +21,7 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const { t, lang } = useLanguage();
+  const { isOwner } = useRole();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
@@ -79,6 +82,14 @@ export default function DashboardPage() {
     );
     const totalDebts = (customers ?? []).reduce((sum, c: any) => sum + Number(c.current_debt), 0);
     const lowStockProducts = allProducts.filter((p) => p.current_stock <= p.min_stock);
+
+    // Products expiring within 30 days (or already expired), soonest first —
+    // relevant for both roles since it's a food-safety concern, not just financial.
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const expiringProducts = allProducts
+      .filter((p) => p.expiry_date && new Date(p.expiry_date) <= thirtyDaysFromNow)
+      .sort((a, b) => new Date(a.expiry_date!).getTime() - new Date(b.expiry_date!).getTime());
     const monthGrossProfit = (monthSales ?? []).reduce((sum, s: any) => sum + Number(s.profit), 0);
     const monthExpenses = (monthExpensesData ?? []).reduce((sum, e: any) => sum + Number(e.amount), 0);
 
@@ -88,6 +99,7 @@ export default function DashboardPage() {
       inventoryValue,
       totalDebts,
       lowStockProducts,
+      expiringProducts,
       recentSales: (recentSales ?? []) as Sale[],
       monthProfit: monthGrossProfit - monthExpenses,
       monthExpenses,
@@ -118,29 +130,31 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <StatCard
-                href="/sales/history"
-                label={t("stat_today_sales")}
-                value={formatEGP(data.todaySales, lang)}
-                sub={`${data.todayInvoices} ${t("stat_invoices_suffix")}`}
-              />
-              <StatCard href="/inventory" label={t("stat_inventory_value")} value={formatEGP(data.inventoryValue, lang)} />
-              <StatCard href="/debts" label={t("stat_total_debts")} value={formatEGP(data.totalDebts, lang)} tone="warn" />
-              <StatCard
-                href="/inventory"
-                label={t("stat_low_stock")}
-                value={String(data.lowStockProducts.length)}
-                tone={data.lowStockProducts.length ? "danger" : "default"}
-              />
-              <StatCard
-                href="/reports"
-                label={t("stat_month_profit")}
-                value={formatEGP(data.monthProfit, lang)}
-                tone={data.monthProfit >= 0 ? "default" : "danger"}
-              />
-              <StatCard href="/expenses" label={t("stat_month_expenses")} value={formatEGP(data.monthExpenses, lang)} tone="warn" />
-            </div>
+            {isOwner && (
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <StatCard
+                  href="/sales/history"
+                  label={t("stat_today_sales")}
+                  value={formatEGP(data.todaySales, lang)}
+                  sub={`${data.todayInvoices} ${t("stat_invoices_suffix")}`}
+                />
+                <StatCard href="/inventory" label={t("stat_inventory_value")} value={formatEGP(data.inventoryValue, lang)} />
+                <StatCard href="/debts" label={t("stat_total_debts")} value={formatEGP(data.totalDebts, lang)} tone="warn" />
+                <StatCard
+                  href="/inventory"
+                  label={t("stat_low_stock")}
+                  value={String(data.lowStockProducts.length)}
+                  tone={data.lowStockProducts.length ? "danger" : "default"}
+                />
+                <StatCard
+                  href="/reports"
+                  label={t("stat_month_profit")}
+                  value={formatEGP(data.monthProfit, lang)}
+                  tone={data.monthProfit >= 0 ? "default" : "danger"}
+                />
+                <StatCard href="/expenses" label={t("stat_month_expenses")} value={formatEGP(data.monthExpenses, lang)} tone="warn" />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <Link
@@ -149,12 +163,14 @@ export default function DashboardPage() {
               >
                 {t("btn_new_sale")}
               </Link>
-              <Link
-                href="/purchases/new"
-                className="block w-full rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50"
-              >
-                {t("btn_new_purchase")}
-              </Link>
+              {isOwner && (
+                <Link
+                  href="/purchases/new"
+                  className="block w-full rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50"
+                >
+                  {t("btn_new_purchase")}
+                </Link>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -174,6 +190,30 @@ export default function DashboardPage() {
                   <Link href="/inventory" className="mt-2 block text-center text-xs font-semibold text-brand-600">
                     {t("view_all_inventory")}
                   </Link>
+                </section>
+              )}
+
+              {data.expiringProducts.length > 0 && (
+                <section className="rounded-2xl bg-white p-4 shadow-sm">
+                  <h2 className="mb-2 text-sm font-bold text-gray-900">{t("section_expiring_products")}</h2>
+                  <ul className="divide-y divide-gray-100">
+                    {data.expiringProducts.slice(0, 5).map((p) => {
+                      const daysLeft = Math.ceil(
+                        (new Date(p.expiry_date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                      );
+                      const expired = daysLeft < 0;
+                      return (
+                        <li key={p.id}>
+                          <Link href={`/inventory/${p.id}`} className="flex items-center justify-between py-2 text-sm">
+                            <span className="text-gray-700">{p.name}</span>
+                            <span className={`font-semibold ${expired ? "text-red-600" : "text-amber-600"}`}>
+                              {expired ? t("expired_now") : `${daysLeft} ${t("days_remaining_suffix")}`}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </section>
               )}
 
