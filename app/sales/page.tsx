@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatEGP, getStockStatus, CartLine, Customer, Product } from "@/lib/types";
+import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup } from "@/lib/types";
 
 type Step = "customer" | "products" | "cart";
 
@@ -28,6 +28,8 @@ export default function SalesPage() {
   const [walkInName, setWalkInName] = useState("");
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [groups, setGroups] = useState<ProductGroup[]>([]);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
 
@@ -49,7 +51,25 @@ export default function SalesPage() {
       .eq("is_active", true)
       .order("name")
       .then(({ data }) => setProducts((data ?? []) as Product[]));
+    supabase
+      .from("product_groups")
+      .select("*")
+      .order("name")
+      .then(({ data }) => setGroups((data ?? []) as ProductGroup[]));
   }, []);
+
+  const groupsById = useMemo(() => {
+    const map = new Map<string, ProductGroup>();
+    groups.forEach((g) => map.set(g.id, g));
+    return map;
+  }, [groups]);
+
+  function productDisplayName(p: Product): string {
+    const group = p.group_id ? groupsById.get(p.group_id) : null;
+    if (!group) return p.name;
+    const variantLabel = [p.flavor, p.size].filter(Boolean).join(" ");
+    return variantLabel ? `${group.name} — ${variantLabel}` : group.name;
+  }
 
   const filteredCustomers = useMemo(
     () =>
@@ -66,12 +86,30 @@ export default function SalesPage() {
     () =>
       products.filter(
         (p) =>
-          !productSearch ||
-          p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-          (p.barcode ?? "").includes(productSearch)
+          !p.group_id &&
+          (!productSearch ||
+            p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+            (p.barcode ?? "").includes(productSearch))
       ),
     [products, productSearch]
   );
+
+  const filteredGroups = useMemo(() => {
+    return groups
+      .map((g) => {
+        const variants = products.filter((p) => p.group_id === g.id);
+        const matches =
+          !productSearch ||
+          g.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+          variants.some(
+            (v) =>
+              v.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+              (v.barcode ?? "").includes(productSearch)
+          );
+        return { group: g, variants, matches };
+      })
+      .filter((entry) => entry.variants.length > 0 && entry.matches);
+  }, [groups, products, productSearch]);
 
   const subtotal = useMemo(
     () => cart.reduce((sum, line) => sum + line.product.selling_price * line.quantity, 0),
@@ -130,7 +168,7 @@ export default function SalesPage() {
 
     for (const line of cart) {
       if (line.quantity > line.product.current_stock) {
-        setError(`الكمية المطلوبة من "${line.product.name}" غير متوفرة في المخزون.`);
+        setError(`الكمية المطلوبة من "${productDisplayName(line.product)}" غير متوفرة في المخزون.`);
         return;
       }
     }
@@ -182,7 +220,7 @@ export default function SalesPage() {
       await supabase.from("sale_items").insert({
         sale_id: sale.id,
         product_id: line.product.id,
-        product_name_snapshot: line.product.name,
+        product_name_snapshot: productDisplayName(line.product),
         quantity: line.quantity,
         unit_price: line.product.selling_price,
         unit_cost: line.product.purchase_price,
@@ -303,6 +341,66 @@ export default function SalesPage() {
           />
 
           <ul className="space-y-2">
+            {filteredGroups.map(({ group, variants }) => {
+              const expanded = expandedGroupId === group.id;
+              return (
+                <li key={group.id} className="rounded-xl bg-white shadow-sm">
+                  <button
+                    onClick={() => setExpandedGroupId(expanded ? null : group.id)}
+                    className="flex w-full items-center gap-3 p-3 text-right"
+                  >
+                    {group.image_url ? (
+                      <img
+                        src={group.image_url}
+                        alt={group.name}
+                        className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-lg text-gray-300">
+                        🛍️
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-gray-900">{group.name}</p>
+                      <p className="text-xs text-gray-400">{variants.length} طعم/حجم — اضغط للاختيار</p>
+                    </div>
+                    <span className="shrink-0 text-gray-300">{expanded ? "▲" : "▼"}</span>
+                  </button>
+
+                  {expanded && (
+                    <div className="space-y-2 border-t border-gray-100 p-3">
+                      {variants.map((v) => {
+                        const status = getStockStatus(v);
+                        const inCart = cart.find((l) => l.product.id === v.id);
+                        return (
+                          <div
+                            key={v.id}
+                            className="flex items-center justify-between rounded-lg bg-gray-50 p-2.5"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-gray-800">
+                                {v.flavor || "-"} {v.size ? `· ${v.size}` : ""}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {formatEGP(v.selling_price)} · متاح {v.current_stock}
+                              </p>
+                            </div>
+                            <button
+                              disabled={status === "out"}
+                              onClick={() => addToCart(v)}
+                              className="mr-2 shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:bg-gray-200 disabled:text-gray-400"
+                            >
+                              {inCart ? `+ (${inCart.quantity})` : "إضافة"}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+
             {filteredProducts.map((p) => {
               const status = getStockStatus(p);
               const inCart = cart.find((l) => l.product.id === p.id);
@@ -349,7 +447,7 @@ export default function SalesPage() {
               {cart.map((line) => (
                 <li key={line.product.id} className="rounded-xl bg-white p-3 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900">{line.product.name}</p>
+                    <p className="text-sm font-bold text-gray-900">{productDisplayName(line.product)}</p>
                     <button onClick={() => removeLine(line.product.id)} className="text-xs text-red-500">
                       حذف
                     </button>
