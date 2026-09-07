@@ -5,8 +5,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, Customer } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import { useRole } from "@/components/RoleProvider";
 
 export default function CustomersPage() {
+  const { isOwner } = useRole();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -313,12 +315,14 @@ export default function CustomersPage() {
                       >
                         تعديل
                       </button>
-                      <button
-                        onClick={() => deleteCustomer(c)}
-                        className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
-                      >
-                        حذف
-                      </button>
+                      {isOwner && (
+                        <button
+                          onClick={() => deleteCustomer(c)}
+                          className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
+                        >
+                          حذف
+                        </button>
+                      )}
                     </div>
                   </>
                 )}
