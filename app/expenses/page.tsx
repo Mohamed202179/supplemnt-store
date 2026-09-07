@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Expense, ExpenseCategory, EXPENSE_CATEGORY_LABELS, formatEGP, formatDate } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
 const categories: ExpenseCategory[] = ["rent", "electricity", "transportation", "salaries", "marketing", "other"];
 
-export default function ExpensesPage() {
+function ExpensesPageContent() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -167,5 +168,13 @@ export default function ExpensesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ExpensesPage() {
+  return (
+    <OwnerGate>
+      <ExpensesPageContent />
+    </OwnerGate>
   );
 }
