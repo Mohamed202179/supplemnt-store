@@ -4,6 +4,7 @@ import AuthGate from "@/components/AuthGate";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { RoleProvider } from "@/components/RoleProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Daily Dose Supplements",
@@ -32,12 +33,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body className="font-sans antialiased">
-        <LanguageProvider>
-          <RoleProvider>
-            <AuthGate>{children}</AuthGate>
-            <ServiceWorkerRegister />
-          </RoleProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <RoleProvider>
+              <AuthGate>{children}</AuthGate>
+              <ServiceWorkerRegister />
+            </RoleProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
