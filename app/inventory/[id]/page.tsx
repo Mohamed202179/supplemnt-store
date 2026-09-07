@@ -5,8 +5,10 @@ import { supabase } from "@/lib/supabase/client";
 import { formatEGP, formatDateTime, getStockStatus, MOVEMENT_TYPE_LABELS, Product, StockMovement } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
+import { useRole } from "@/components/RoleProvider";
 
 export default function ProductStockPage({ params }: { params: { id: string } }) {
+  const { isOwner } = useRole();
   const [product, setProduct] = useState<Product | null>(null);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,14 +105,16 @@ export default function ProductStockPage({ params }: { params: { id: string } })
             </div>
           </div>
 
-          <button
-            onClick={() => setShowAdjust((s) => !s)}
-            className="mt-3 w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white"
-          >
-            {showAdjust ? "إغلاق" : "تعديل الكمية يدويًا"}
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowAdjust((s) => !s)}
+              className="mt-3 w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white"
+            >
+              {showAdjust ? "إغلاق" : "تعديل الكمية يدويًا"}
+            </button>
+          )}
 
-          {showAdjust && (
+          {isOwner && showAdjust && (
             <form onSubmit={submitAdjustment} className="mt-3 space-y-2 border-t border-gray-100 pt-3">
               {error && <p className="text-xs text-red-600">{error}</p>}
               <label className="block">
