@@ -5,8 +5,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, formatDate, Purchase } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function PurchasesPage() {
+function PurchasesPageContent() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -83,5 +84,13 @@ export default function PurchasesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PurchasesPage() {
+  return (
+    <OwnerGate>
+      <PurchasesPageContent />
+    </OwnerGate>
   );
 }
