@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Sale, SaleItem, Customer, formatEGP, formatDateTime, paymentStatusLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import { useRole } from "@/components/RoleProvider";
 
 export default function SaleDetailPage({ params }: { params: { id: string } }) {
+  const { isOwner } = useRole();
   const [sale, setSale] = useState<Sale | null>(null);
   const [items, setItems] = useState<SaleItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -133,7 +135,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
 
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
-        {sale.status === "completed" && (
+        {sale.status === "completed" && isOwner && (
           <button
             onClick={cancelSale}
             disabled={cancelling}
