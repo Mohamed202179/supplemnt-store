@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { Supplier, Purchase, Payment, formatEGP, formatDate } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function SupplierDetailPage({ params }: { params: { id: string } }) {
+function SupplierDetailPageContent({ params }: { params: { id: string } }) {
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -160,7 +160,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
             <ul className="divide-y divide-gray-100">
               {purchases.map((p) => (
                 <li key={p.id} className="py-2 text-sm">
-                  <Link href={`/purchases/${p.id}`} className="block">
+                  <a href={`/purchases/${p.id}`} className="block">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">
                         {formatDate(p.created_at)}{" "}
@@ -171,7 +171,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
                     <p className="text-xs text-gray-400">
                       مدفوع {formatEGP(p.paid_amount)} · متبقي {formatEGP(p.remaining_amount)}
                     </p>
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -179,5 +179,13 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
         </section>
       </div>
     </div>
+  );
+}
+
+export default function SupplierDetailPage({ params }: { params: { id: string } }) {
+  return (
+    <OwnerGate>
+      <SupplierDetailPageContent params={params} />
+    </OwnerGate>
   );
 }
