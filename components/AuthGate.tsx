@@ -41,12 +41,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [checked, authed, pathname, router]);
 
-  // Login page renders on its own, with no nav chrome around it.
   if (pathname === "/login") return <>{children}</>;
 
   if (!checked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
         <p className="text-sm text-gray-400">جارِ التحقق...</p>
       </div>
     );
@@ -54,7 +53,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!authed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
         <p className="text-sm text-gray-400">جارِ التحويل لتسجيل الدخول...</p>
       </div>
     );
@@ -63,7 +62,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <DesktopNav />
-      <div className="mx-auto min-h-screen max-w-md bg-gray-50 pb-24 md:max-w-5xl md:pb-6">
+      <div className="mx-auto min-h-screen max-w-md bg-gray-50 pb-24 dark:bg-gray-950 md:max-w-5xl md:pb-6">
         <main className="safe-top">{children}</main>
       </div>
       <BottomNav />
