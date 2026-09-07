@@ -11,7 +11,11 @@ body {
   color: #111827;
 }
 
-/* Safe area padding for iPhone home indicator */
+.dark body {
+  background-color: #0f1117;
+  color: #e5e7eb;
+}
+
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -20,7 +24,7 @@ body {
 }
 
 input, select, textarea {
-  font-size: 16px; /* prevents iOS Safari auto-zoom on focus */
+  font-size: 16px;
 }
 
 ::-webkit-scrollbar {
