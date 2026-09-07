@@ -5,8 +5,9 @@ import { supabase } from "@/lib/supabase/client";
 import { Product } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import ProductForm from "@/components/ProductForm";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+function EditProductPageContent({ params }: { params: { id: string } }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -31,5 +32,13 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       {notFound && <p className="p-6 text-center text-sm text-gray-400">المنتج غير موجود</p>}
       {product && <ProductForm initial={product} />}
     </div>
+  );
+}
+
+export default function EditProductPage({ params }: { params: { id: string } }) {
+  return (
+    <OwnerGate>
+      <EditProductPageContent params={params} />
+    </OwnerGate>
   );
 }
