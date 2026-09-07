@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, Product, Customer } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import OwnerGate from "@/components/OwnerGate";
 
 type RangeKey = "today" | "week" | "month" | "custom";
 
@@ -13,7 +14,7 @@ interface TopProduct {
   revenue: number;
 }
 
-export default function ReportsPage() {
+function ReportsPageContent() {
   const [range, setRange] = useState<RangeKey>("today");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -266,5 +267,13 @@ function Row({
         {value}
       </span>
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <OwnerGate>
+      <ReportsPageContent />
+    </OwnerGate>
   );
 }
