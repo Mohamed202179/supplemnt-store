@@ -96,6 +96,10 @@ const ar = {
   settings_header_success: "تم تحديث صورة الهيدر ✓",
   settings_header_error: "حدث خطأ أثناء رفع الصورة، حاول مرة أخرى",
   settings_header_remove: "إزالة الصورة (الرجوع للخلفية الافتراضية)",
+
+  section_expiring_products: "منتجات قريبة من انتهاء الصلاحية",
+  expired_now: "منتهي الصلاحية",
+  days_remaining_suffix: "يوم متبقي",
 } as const;
 
 const en: Record<keyof typeof ar, string> = {
@@ -186,6 +190,10 @@ const en: Record<keyof typeof ar, string> = {
   settings_header_success: "Header image updated ✓",
   settings_header_error: "An error occurred while uploading the image, try again",
   settings_header_remove: "Remove image (revert to default background)",
+
+  section_expiring_products: "Expiring Soon",
+  expired_now: "Expired",
+  days_remaining_suffix: "days left",
 };
 
 export const translations = { ar, en };
