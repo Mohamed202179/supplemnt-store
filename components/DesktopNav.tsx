@@ -4,20 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useRole } from "@/components/RoleProvider";
 import { TranslationKey } from "@/lib/i18n";
 
-const items: { href: string; labelKey: TranslationKey }[] = [
+const items: { href: string; labelKey: TranslationKey; ownerOnly?: boolean }[] = [
   { href: "/", labelKey: "nav_home" },
   { href: "/sales", labelKey: "nav_sales" },
   { href: "/inventory", labelKey: "nav_inventory" },
-  { href: "/products", labelKey: "nav_products" },
+  { href: "/products", labelKey: "nav_products", ownerOnly: true },
   { href: "/customers", labelKey: "nav_customers" },
   { href: "/debts", labelKey: "nav_debts" },
-  { href: "/purchases", labelKey: "nav_purchases" },
-  { href: "/suppliers", labelKey: "nav_suppliers" },
-  { href: "/expenses", labelKey: "nav_expenses" },
-  { href: "/reports", labelKey: "nav_reports" },
-  { href: "/categories", labelKey: "nav_categories" },
+  { href: "/purchases", labelKey: "nav_purchases", ownerOnly: true },
+  { href: "/suppliers", labelKey: "nav_suppliers", ownerOnly: true },
+  { href: "/expenses", labelKey: "nav_expenses", ownerOnly: true },
+  { href: "/reports", labelKey: "nav_reports", ownerOnly: true },
+  { href: "/categories", labelKey: "nav_categories", ownerOnly: true },
   { href: "/settings", labelKey: "nav_settings" },
 ];
 
@@ -25,6 +26,8 @@ export default function DesktopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { isOwner } = useRole();
+  const visibleItems = items.filter((item) => !item.ownerOnly || isOwner);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -38,7 +41,7 @@ export default function DesktopNav() {
           <img src="/icons/icon-192.png" alt="Daily Dose" className="h-6 w-6 rounded-md object-cover" />
           Daily Dose
         </span>
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link
