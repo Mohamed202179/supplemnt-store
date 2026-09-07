@@ -101,6 +101,17 @@ export default function InventoryPage() {
                         {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">{p.categories?.name || "بدون تصنيف"}</p>
+                      {p.expiry_date && (() => {
+                        const daysLeft = Math.ceil(
+                          (new Date(p.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                        );
+                        if (daysLeft > 30) return null;
+                        return (
+                          <p className={`mt-0.5 text-xs font-semibold ${daysLeft < 0 ? "text-red-600" : "text-amber-600"}`}>
+                            {daysLeft < 0 ? "منتهي الصلاحية" : `ينتهي خلال ${daysLeft} يوم`}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2 text-center text-xs">
