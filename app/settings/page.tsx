@@ -5,11 +5,13 @@ import { supabase } from "@/lib/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useRole } from "@/components/RoleProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import { AppSettings } from "@/lib/types";
 
 export default function SettingsPage() {
   const { t, lang, toggleLang } = useLanguage();
   const { isOwner } = useRole();
+  const { themeMode, setThemeMode } = useTheme();
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -145,15 +147,15 @@ export default function SettingsPage() {
       <PageHeader title={t("settings_title")} />
 
       <div className="space-y-4 p-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-500">{t("settings_email_label")}</p>
-          <p className="mt-1 font-bold text-gray-900">{email || "..."}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("settings_email_label")}</p>
+          <p className="mt-1 font-bold text-gray-900 dark:text-gray-100">{email || "..."}</p>
         </div>
 
         {isOwner && (
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-1 text-sm font-bold text-gray-900">{t("settings_header_section")}</h2>
-          <p className="mb-3 text-xs text-gray-400">{t("settings_header_desc")}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+          <h2 className="mb-1 text-sm font-bold text-gray-900 dark:text-gray-100">{t("settings_header_section")}</h2>
+          <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">{t("settings_header_desc")}</p>
 
           {headerError && <div className="mb-3 rounded-xl bg-red-50 p-3 text-xs text-red-600">{headerError}</div>}
           {headerSuccess && (
@@ -185,14 +187,45 @@ export default function SettingsPage() {
         </div>
         )}
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-1 text-sm font-bold text-gray-900">{t("settings_language_section")}</h2>
-          <p className="mb-3 text-xs text-gray-400">{t("settings_language_desc")}</p>
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+          <h2 className="mb-1 text-sm font-bold text-gray-900 dark:text-gray-100">{t("settings_theme_section")}</h2>
+          <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">{t("settings_theme_desc")}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setThemeMode("light")}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${
+                themeMode === "light" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              }`}
+            >
+              {t("theme_light")}
+            </button>
+            <button
+              onClick={() => setThemeMode("dark")}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${
+                themeMode === "dark" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              }`}
+            >
+              {t("theme_dark")}
+            </button>
+            <button
+              onClick={() => setThemeMode("system")}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${
+                themeMode === "system" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              }`}
+            >
+              {t("theme_system")}
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+          <h2 className="mb-1 text-sm font-bold text-gray-900 dark:text-gray-100">{t("settings_language_section")}</h2>
+          <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">{t("settings_language_desc")}</p>
           <div className="flex gap-2">
             <button
               onClick={() => lang !== "ar" && toggleLang()}
               className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${
-                lang === "ar" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600"
+                lang === "ar" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
               }`}
             >
               العربية
@@ -200,7 +233,7 @@ export default function SettingsPage() {
             <button
               onClick={() => lang !== "en" && toggleLang()}
               className={`flex-1 rounded-xl py-2.5 text-sm font-bold ${
-                lang === "en" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600"
+                lang === "en" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
               }`}
             >
               English
@@ -208,7 +241,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
           <h2 className="mb-3 text-sm font-bold text-gray-900">{t("settings_password_section")}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -218,33 +251,33 @@ export default function SettingsPage() {
             )}
 
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-gray-600">{t("settings_current_password")}</span>
+              <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">{t("settings_current_password")}</span>
               <input
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 type="password"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 placeholder="••••••••"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-gray-600">{t("settings_new_password")}</span>
+              <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">{t("settings_new_password")}</span>
               <input
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 type="password"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-gray-600">{t("settings_confirm_password")}</span>
+              <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">{t("settings_confirm_password")}</span>
               <input
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type="password"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
             </label>
 
