@@ -186,10 +186,14 @@ export default function SalesPage() {
 
     setCompleting(true);
 
-    const profit = cart.reduce(
+    // Gross line profit (selling - cost per item), then subtract the
+    // whole-invoice discount — a discount reduces revenue without reducing
+    // cost, so it must come off profit too, not just off the customer's total.
+    const grossLineProfit = cart.reduce(
       (sum, l) => sum + (l.product.selling_price - l.product.purchase_price) * l.quantity,
       0
     );
+    const profit = grossLineProfit - (Number(discount) || 0);
 
     const paymentStatus = remaining <= 0 ? "paid" : paid <= 0 ? "unpaid" : "partial";
 
