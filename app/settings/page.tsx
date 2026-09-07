@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useRole } from "@/components/RoleProvider";
 import { AppSettings } from "@/lib/types";
 
 export default function SettingsPage() {
   const { t, lang, toggleLang } = useLanguage();
+  const { isOwner } = useRole();
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -148,6 +150,7 @@ export default function SettingsPage() {
           <p className="mt-1 font-bold text-gray-900">{email || "..."}</p>
         </div>
 
+        {isOwner && (
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-1 text-sm font-bold text-gray-900">{t("settings_header_section")}</h2>
           <p className="mb-3 text-xs text-gray-400">{t("settings_header_desc")}</p>
@@ -180,6 +183,7 @@ export default function SettingsPage() {
             </button>
           )}
         </div>
+        )}
 
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="mb-1 text-sm font-bold text-gray-900">{t("settings_language_section")}</h2>
