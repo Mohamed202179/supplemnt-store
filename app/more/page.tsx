@@ -5,22 +5,25 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useRole } from "@/components/RoleProvider";
 import { TranslationKey } from "@/lib/i18n";
 
-const items: { href: string; icon: string; labelKey: TranslationKey; descKey: TranslationKey }[] = [
-  { href: "/products", icon: "🛍️", labelKey: "item_products_label", descKey: "item_products_desc" },
-  { href: "/purchases", icon: "🛒", labelKey: "item_purchases_label", descKey: "item_purchases_desc" },
-  { href: "/suppliers", icon: "🚚", labelKey: "item_suppliers_label", descKey: "item_suppliers_desc" },
+const items: { href: string; icon: string; labelKey: TranslationKey; descKey: TranslationKey; ownerOnly?: boolean }[] = [
+  { href: "/products", icon: "🛍️", labelKey: "item_products_label", descKey: "item_products_desc", ownerOnly: true },
+  { href: "/purchases", icon: "🛒", labelKey: "item_purchases_label", descKey: "item_purchases_desc", ownerOnly: true },
+  { href: "/suppliers", icon: "🚚", labelKey: "item_suppliers_label", descKey: "item_suppliers_desc", ownerOnly: true },
   { href: "/debts", icon: "💰", labelKey: "item_debts_label", descKey: "item_debts_desc" },
-  { href: "/expenses", icon: "🧾", labelKey: "item_expenses_label", descKey: "item_expenses_desc" },
-  { href: "/reports", icon: "📊", labelKey: "item_reports_label", descKey: "item_reports_desc" },
-  { href: "/categories", icon: "🏷️", labelKey: "item_categories_label", descKey: "item_categories_desc" },
+  { href: "/expenses", icon: "🧾", labelKey: "item_expenses_label", descKey: "item_expenses_desc", ownerOnly: true },
+  { href: "/reports", icon: "📊", labelKey: "item_reports_label", descKey: "item_reports_desc", ownerOnly: true },
+  { href: "/categories", icon: "🏷️", labelKey: "item_categories_label", descKey: "item_categories_desc", ownerOnly: true },
   { href: "/settings", icon: "⚙️", labelKey: "item_settings_label", descKey: "item_settings_desc" },
 ];
 
 export default function MorePage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { isOwner } = useRole();
+  const visibleItems = items.filter((item) => !item.ownerOnly || isOwner);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -31,7 +34,7 @@ export default function MorePage() {
     <div>
       <PageHeader title={t("more_title")} />
       <div className="space-y-2 p-4">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
