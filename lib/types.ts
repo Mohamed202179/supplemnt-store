@@ -26,6 +26,17 @@ export interface Product {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  group_id: string | null;
+  categories?: { name: string } | null;
+}
+
+export interface ProductGroup {
+  id: string;
+  name: string;
+  category_id: string | null;
+  brand: string | null;
+  image_url: string | null;
+  created_at: string;
   categories?: { name: string } | null;
 }
 
