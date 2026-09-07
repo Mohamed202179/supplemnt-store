@@ -83,12 +83,12 @@ export default function DashboardPage() {
     const totalDebts = (customers ?? []).reduce((sum, c: any) => sum + Number(c.current_debt), 0);
     const lowStockProducts = allProducts.filter((p) => p.current_stock <= p.min_stock);
 
-    // Products expiring within 30 days (or already expired), soonest first —
+    // Products expiring within 90 days (or already expired), soonest first —
     // relevant for both roles since it's a food-safety concern, not just financial.
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const ninetyDaysFromNow = new Date();
+    ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     const expiringProducts = allProducts
-      .filter((p) => p.expiry_date && new Date(p.expiry_date) <= thirtyDaysFromNow)
+      .filter((p) => p.expiry_date && new Date(p.expiry_date) <= ninetyDaysFromNow)
       .sort((a, b) => new Date(a.expiry_date!).getTime() - new Date(b.expiry_date!).getTime());
     const monthGrossProfit = (monthSales ?? []).reduce((sum, s: any) => sum + Number(s.profit), 0);
     const monthExpenses = (monthExpensesData ?? []).reduce((sum, e: any) => sum + Number(e.amount), 0);
