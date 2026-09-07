@@ -35,7 +35,7 @@ export default function DesktopNav() {
   }
 
   return (
-    <nav className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white md:block">
+    <nav className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white md:block dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-5xl items-center gap-1 overflow-x-auto px-4 py-2">
         <span className="ml-2 flex shrink-0 items-center gap-1.5 text-sm font-bold text-brand-700">
           <img src="/icons/icon-192.png" alt="Daily Dose" className="h-6 w-6 rounded-md object-cover" />
@@ -48,7 +48,7 @@ export default function DesktopNav() {
               key={item.href}
               href={item.href}
               className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                active ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                active ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               }`}
             >
               {t(item.labelKey)}
@@ -57,7 +57,7 @@ export default function DesktopNav() {
         })}
         <button
           onClick={logout}
-          className="mr-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+          className="mr-auto shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
         >
           {t("logout")}
         </button>
