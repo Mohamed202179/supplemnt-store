@@ -20,7 +20,7 @@ export default function BottomNav() {
   const { t } = useLanguage();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-md border-t border-gray-200 bg-white safe-bottom md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-md border-t border-gray-200 bg-white safe-bottom md:hidden dark:border-gray-800 dark:bg-gray-900">
       <ul className="grid grid-cols-5">
         {items.map((item) => {
           let active: boolean;
@@ -36,7 +36,7 @@ export default function BottomNav() {
               <Link
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium ${
-                  active ? "text-brand-600" : "text-gray-400"
+                  active ? "text-brand-600" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 <span className="text-xl leading-none">{item.icon}</span>
