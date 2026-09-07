@@ -6,8 +6,9 @@ import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, Product, Category } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
+import OwnerGate from "@/components/OwnerGate";
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
@@ -162,5 +163,13 @@ export default function ProductsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <OwnerGate>
+      <ProductsPageContent />
+    </OwnerGate>
   );
 }
