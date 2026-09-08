@@ -22,6 +22,7 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "low" | "expiring" | "available">("all");
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -53,16 +54,36 @@ export default function InventoryPage() {
     });
   }
 
+  function isExpiringSoon(p: Product): boolean {
+    if (!p.expiry_date) return false;
+    const daysLeft = Math.ceil((new Date(p.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return daysLeft <= 90;
+  }
+
+  function matchesStatusFilter(p: Product): boolean {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "expiring") return isExpiringSoon(p);
+    const status = getStockStatus(p);
+    if (statusFilter === "low") return status === "low" || status === "out";
+    if (statusFilter === "available") return status === "available";
+    return true;
+  }
+
   const standaloneProducts = useMemo(
     () =>
-      products.filter((p) => !p.group_id && (!search || p.name.toLowerCase().includes(search.toLowerCase()))),
-    [products, search]
+      products.filter(
+        (p) =>
+          !p.group_id &&
+          (!search || p.name.toLowerCase().includes(search.toLowerCase())) &&
+          matchesStatusFilter(p)
+      ),
+    [products, search, statusFilter]
   );
 
   const visibleGroups = useMemo(() => {
     return groups
       .map((g) => {
-        const variants = products.filter((p) => p.group_id === g.id);
+        const variants = products.filter((p) => p.group_id === g.id && matchesStatusFilter(p));
         const matches =
           !search ||
           g.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -70,7 +91,20 @@ export default function InventoryPage() {
         return { group: g, variants, matches };
       })
       .filter((entry) => entry.variants.length > 0 && entry.matches);
-  }, [groups, products, search]);
+  }, [groups, products, search, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    let low = 0;
+    let expiring = 0;
+    let available = 0;
+    for (const p of products) {
+      const status = getStockStatus(p);
+      if (status === "low" || status === "out") low++;
+      else if (status === "available") available++;
+      if (isExpiringSoon(p)) expiring++;
+    }
+    return { low, expiring, available };
+  }, [products]);
 
   const totalValue = useMemo(
     () => products.reduce((sum, p) => sum + p.current_stock * p.purchase_price, 0),
@@ -91,28 +125,58 @@ export default function InventoryPage() {
       />
 
       <div className="space-y-3 p-4">
-        <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
           <div>
-            <p className="text-xs text-gray-500">إجمالي قيمة المخزون (بسعر الشراء)</p>
-            <p className="mt-1 text-xl font-bold text-brand-700">{formatEGP(totalValue)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">إجمالي قيمة المخزون (بسعر الشراء)</p>
+            <p className="mt-1 text-xl font-bold text-brand-700 dark:text-brand-300">{formatEGP(totalValue)}</p>
           </div>
-          <Link href="/products" className="shrink-0 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700">
+          <Link href="/products" className="shrink-0 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             إدارة المنتجات ←
           </Link>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => setStatusFilter(statusFilter === "low" ? "all" : "low")}
+            className={`rounded-xl p-2.5 text-center ${
+              statusFilter === "low" ? "ring-2 ring-red-500" : ""
+            } bg-red-50 dark:bg-red-500/10`}
+          >
+            <p className="text-lg font-bold text-red-700 dark:text-red-300">{statusCounts.low}</p>
+            <p className="text-[11px] font-semibold text-red-600 dark:text-red-400">منخفض</p>
+          </button>
+          <button
+            onClick={() => setStatusFilter(statusFilter === "expiring" ? "all" : "expiring")}
+            className={`rounded-xl p-2.5 text-center ${
+              statusFilter === "expiring" ? "ring-2 ring-amber-500" : ""
+            } bg-amber-50 dark:bg-amber-500/10`}
+          >
+            <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{statusCounts.expiring}</p>
+            <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">قريب الانتهاء</p>
+          </button>
+          <button
+            onClick={() => setStatusFilter(statusFilter === "available" ? "all" : "available")}
+            className={`rounded-xl p-2.5 text-center ${
+              statusFilter === "available" ? "ring-2 ring-green-500" : ""
+            } bg-green-50 dark:bg-green-500/10`}
+          >
+            <p className="text-lg font-bold text-green-700 dark:text-green-300">{statusCounts.available}</p>
+            <p className="text-[11px] font-semibold text-green-600 dark:text-green-400">متوفر</p>
+          </button>
         </div>
 
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث عن منتج..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
         />
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : isEmpty ? (
           <div className="py-10 text-center">
-            <p className="text-sm text-gray-400">لا توجد منتجات بعد</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">لا توجد منتجات بعد</p>
             <Link href="/products/new" className="mt-3 inline-block rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white">
               + إضافة أول منتج
             </Link>
