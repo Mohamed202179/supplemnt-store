@@ -50,7 +50,7 @@ export default function SalesHistoryPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث برقم الفاتورة أو اسم العميل..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
         />
 
         <div className="flex gap-2">
@@ -59,7 +59,7 @@ export default function SalesHistoryPage() {
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                statusFilter === s ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+                statusFilter === s ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
               }`}
             >
               {s === "all" ? "الكل" : s === "completed" ? "مكتملة" : "ملغاة"}
@@ -68,25 +68,25 @@ export default function SalesHistoryPage() {
         </div>
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد فواتير مطابقة</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد فواتير مطابقة</p>
         ) : (
           <ul className="space-y-2">
             {filtered.map((s) => (
               <li key={s.id}>
-                <Link href={`/sales/${s.id}`} className="block rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50">
+                <Link href={`/sales/${s.id}`} className="block rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm active:bg-gray-50 dark:bg-gray-800">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-gray-900">
+                      <p className="font-bold text-gray-900 dark:text-gray-100">
                         فاتورة #{s.invoice_number}{" "}
                         {s.status === "cancelled" && <span className="text-xs text-red-500">(ملغاة)</span>}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {s.customers?.name || s.customer_name_snapshot || "عميل نقدي"} · {formatDateTime(s.created_at)}
                       </p>
                     </div>
-                    <span className="font-bold text-gray-900">{formatEGP(s.total)}</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(s.total)}</span>
                   </div>
                 </Link>
               </li>
