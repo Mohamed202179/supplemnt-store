@@ -71,7 +71,7 @@ function CategoriesPageContent() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="اسم تصنيف جديد..."
-            className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm"
+            className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm"
           />
           <button
             type="submit"
@@ -83,19 +83,19 @@ function CategoriesPageContent() {
         </form>
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : categories.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد تصنيفات بعد</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد تصنيفات بعد</p>
         ) : (
           <ul className="space-y-2">
             {categories.map((c) => (
-              <li key={c.id} className="flex items-center gap-2 rounded-2xl bg-white p-3 shadow-sm">
+              <li key={c.id} className="flex items-center gap-2 rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                 {editingId === c.id ? (
                   <>
                     <input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                       autoFocus
                     />
                     <button
@@ -106,17 +106,17 @@ function CategoriesPageContent() {
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-bold text-gray-600"
+                      className="rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                     >
                       إلغاء
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 font-medium text-gray-900">{c.name}</span>
+                    <span className="flex-1 font-medium text-gray-900 dark:text-gray-100">{c.name}</span>
                     <button
                       onClick={() => startEdit(c)}
-                      className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700"
+                      className="rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300"
                     >
                       تعديل
                     </button>
