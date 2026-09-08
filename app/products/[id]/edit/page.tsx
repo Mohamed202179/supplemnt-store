@@ -29,7 +29,7 @@ function EditProductPageContent({ params }: { params: { id: string } }) {
   return (
     <div>
       <PageHeader title="تعديل المنتج" />
-      {notFound && <p className="p-6 text-center text-sm text-gray-400">المنتج غير موجود</p>}
+      {notFound && <p className="p-6 text-center text-sm text-gray-400 dark:text-gray-500">المنتج غير موجود</p>}
       {product && <ProductForm initial={product} />}
     </div>
   );
