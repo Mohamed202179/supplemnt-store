@@ -89,24 +89,24 @@ function ExpensesPageContent() {
       />
 
       <div className="space-y-3 p-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-500">إجمالي مصروفات هذا الشهر</p>
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">إجمالي مصروفات هذا الشهر</p>
           <p className="mt-1 text-xl font-bold text-red-600">{formatEGP(totalThisMonth)}</p>
         </div>
 
         {showForm && (
-          <form onSubmit={addExpense} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+          <form onSubmit={addExpense} className="space-y-3 rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             {error && <div className="rounded-xl bg-red-50 p-3 text-xs text-red-600">{error}</div>}
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="عنوان المصروف *"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -122,13 +122,13 @@ function ExpensesPageContent() {
               min={0}
               step="0.01"
               placeholder="المبلغ (ج.م) *"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ملاحظات (اختياري)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               type="submit"
@@ -141,23 +141,23 @@ function ExpensesPageContent() {
         )}
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : expenses.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد مصروفات مسجلة</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد مصروفات مسجلة</p>
         ) : (
           <ul className="space-y-2">
             {expenses.map((e) => (
-              <li key={e.id} className="rounded-2xl bg-white p-3 shadow-sm">
+              <li key={e.id} className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-gray-900">{e.title}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="font-bold text-gray-900 dark:text-gray-100">{e.title}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {EXPENSE_CATEGORY_LABELS[e.category]} · {formatDate(e.expense_date)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-red-600">{formatEGP(e.amount)}</span>
-                    <button onClick={() => deleteExpense(e.id)} className="text-xs text-gray-400">
+                    <button onClick={() => deleteExpense(e.id)} className="text-xs text-gray-400 dark:text-gray-500">
                       حذف
                     </button>
                   </div>
