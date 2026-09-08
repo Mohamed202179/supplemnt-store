@@ -137,31 +137,31 @@ function SuppliersPageContent() {
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
         {showForm && (
-          <form onSubmit={addSupplier} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+          <form onSubmit={addSupplier} className="space-y-3 rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="اسم المورد *"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="اسم الشركة (اختياري)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="رقم الهاتف"
               inputMode="tel"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ملاحظات (اختياري)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               type="submit"
@@ -177,44 +177,44 @@ function SuppliersPageContent() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث بالاسم أو الهاتف أو الشركة..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
         />
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا يوجد موردون</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا يوجد موردون</p>
         ) : (
           <ul className="space-y-2">
             {filtered.map((s) => (
-              <li key={s.id} className="rounded-2xl bg-white p-3 shadow-sm">
+              <li key={s.id} className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                 {editingId === s.id ? (
                   <div className="space-y-2">
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="اسم المورد *"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                       autoFocus
                     />
                     <input
                       value={editCompany}
                       onChange={(e) => setEditCompany(e.target.value)}
                       placeholder="اسم الشركة"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                     />
                     <input
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="رقم الهاتف"
                       inputMode="tel"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                     />
                     <input
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       placeholder="ملاحظات"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                     />
                     <div className="flex gap-2">
                       <button
@@ -226,7 +226,7 @@ function SuppliersPageContent() {
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="flex-1 rounded-lg bg-gray-100 py-2 text-xs font-bold text-gray-600"
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         إلغاء
                       </button>
@@ -237,21 +237,21 @@ function SuppliersPageContent() {
                     <Link href={`/suppliers/${s.id}`} className="block active:opacity-70">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-gray-900">{s.name}</p>
-                          <p className="text-xs text-gray-400">{s.company || s.phone || "-"}</p>
+                          <p className="font-bold text-gray-900 dark:text-gray-100">{s.name}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{s.company || s.phone || "-"}</p>
                         </div>
                         <div className="text-left">
-                          <p className="text-xs text-gray-400">مستحق له</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">مستحق له</p>
                           <p className={`font-bold ${s.current_debt > 0 ? "text-red-600" : "text-brand-700"}`}>
                             {formatEGP(s.current_debt)}
                           </p>
                         </div>
                       </div>
                     </Link>
-                    <div className="mt-2 flex gap-2 border-t border-gray-100 pt-2">
+                    <div className="mt-2 flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-2">
                       <button
                         onClick={() => startEdit(s)}
-                        className="flex-1 rounded-lg bg-gray-100 py-2 text-center text-xs font-semibold text-gray-700"
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300"
                       >
                         تعديل
                       </button>
