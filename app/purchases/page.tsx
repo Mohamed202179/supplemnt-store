@@ -50,32 +50,32 @@ function PurchasesPageContent() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث برقم الفاتورة أو اسم المورد..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
         />
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد مشتريات بعد</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد مشتريات بعد</p>
         ) : (
           <ul className="space-y-2">
             {filtered.map((p) => (
               <li key={p.id}>
                 <Link
                   href={`/purchases/${p.id}`}
-                  className="block rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50"
+                  className="block rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm active:bg-gray-50 dark:bg-gray-800"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-gray-900">
+                      <p className="font-bold text-gray-900 dark:text-gray-100">
                         فاتورة #{p.purchase_number}{" "}
                         {p.status === "cancelled" && <span className="text-xs text-red-500">(ملغاة)</span>}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {p.supplier_name_snapshot || "بدون مورد"} · {formatDate(p.created_at)}
                       </p>
                     </div>
-                    <span className="font-bold text-gray-900">{formatEGP(p.total)}</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(p.total)}</span>
                   </div>
                 </Link>
               </li>
