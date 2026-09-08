@@ -100,8 +100,8 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
     load();
   }
 
-  if (loading) return <p className="p-10 text-center text-sm text-gray-400">جارِ التحميل...</p>;
-  if (!purchase) return <p className="p-10 text-center text-sm text-gray-400">فاتورة الشراء غير موجودة</p>;
+  if (loading) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>;
+  if (!purchase) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">فاتورة الشراء غير موجودة</p>;
 
   return (
     <div>
@@ -114,27 +114,27 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
             <span>{purchase.supplier_name_snapshot || "بدون مورد"}</span>
             <span>{formatDateTime(purchase.created_at)}</span>
           </div>
 
-          <ul className="mt-3 divide-y divide-gray-100">
+          <ul className="mt-3 divide-y divide-gray-100 dark:divide-gray-800">
             {items.map((item) => (
               <li key={item.id} className="py-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-800">{item.product_name_snapshot}</span>
-                  <span className="font-bold text-gray-900">{formatEGP(item.line_total)}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{item.product_name_snapshot}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(item.line_total)}</span>
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   {item.quantity} × {formatEGP(item.unit_cost)}
                 </p>
               </li>
             ))}
           </ul>
 
-          <div className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-sm">
+          <div className="mt-3 space-y-1 border-t border-gray-100 dark:border-gray-800 pt-3 text-sm">
             <Row label="الإجمالي الفرعي" value={formatEGP(purchase.subtotal)} />
             <Row label="الخصم" value={formatEGP(purchase.discount)} />
             <Row label="الإجمالي" value={formatEGP(purchase.total)} bold />
@@ -163,8 +163,8 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
 function Row({ label, value, bold, tone }: { label: string; value: string; bold?: boolean; tone?: "default" | "danger" }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-500">{label}</span>
-      <span className={`${bold ? "font-bold" : "font-medium"} ${tone === "danger" ? "text-red-600" : "text-gray-900"}`}>
+      <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
+      <span className={`${bold ? "font-bold" : "font-medium"} ${tone === "danger" ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>
         {value}
       </span>
     </div>
