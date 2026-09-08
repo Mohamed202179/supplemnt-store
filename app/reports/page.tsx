@@ -136,7 +136,7 @@ function ReportsPageContent() {
               key={r}
               onClick={() => setRange(r)}
               className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
-                range === r ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+                range === r ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
               }`}
             >
               {r === "today" ? "اليوم" : r === "week" ? "آخر 7 أيام" : r === "month" ? "هذا الشهر" : "مخصص"}
@@ -150,23 +150,23 @@ function ReportsPageContent() {
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"
+              className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
             />
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"
+              className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm"
             />
           </div>
         )}
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : (
           <>
-            <section className="rounded-2xl bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-gray-900">ملخص المبيعات</h2>
+            <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">ملخص المبيعات</h2>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <MiniStat label="إجمالي المبيعات" value={formatEGP(salesTotal)} />
                 <MiniStat label="عدد الفواتير" value={String(invoiceCount)} />
@@ -174,8 +174,8 @@ function ReportsPageContent() {
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-gray-900">ملخص الأرباح</h2>
+            <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">ملخص الأرباح</h2>
               <div className="space-y-1.5 text-sm">
                 <Row label="إجمالي الربح (قبل المصروفات)" value={formatEGP(grossProfit)} />
                 <Row label="المصروفات" value={formatEGP(expensesTotal)} tone="danger" />
@@ -183,24 +183,24 @@ function ReportsPageContent() {
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-gray-900">الأكثر مبيعًا</h2>
+            <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">الأكثر مبيعًا</h2>
               {topProducts.length === 0 ? (
-                <p className="py-3 text-center text-xs text-gray-400">لا توجد مبيعات في هذه الفترة</p>
+                <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد مبيعات في هذه الفترة</p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                   {topProducts.map((p) => (
                     <li key={p.name} className="flex items-center justify-between py-2 text-sm">
-                      <span className="text-gray-700">{p.name}</span>
-                      <span className="font-bold text-gray-900">{p.quantity} قطعة</span>
+                      <span className="text-gray-700 dark:text-gray-300">{p.name}</span>
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{p.quantity} قطعة</span>
                     </li>
                   ))}
                 </ul>
               )}
             </section>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-gray-900">المخزون</h2>
+            <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">المخزون</h2>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <MiniStat label="قيمة المخزون (تكلفة)" value={formatEGP(inventoryValue)} />
                 <MiniStat label="مخزون منخفض" value={String(lowStock.length)} tone={lowStock.length ? "warn" : "default"} />
@@ -208,14 +208,14 @@ function ReportsPageContent() {
               </div>
             </section>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-gray-900">مديونيات العملاء</h2>
+            <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">مديونيات العملاء</h2>
               <MiniStat label="إجمالي المديونيات" value={formatEGP(totalCustomerDebts)} tone={totalCustomerDebts ? "danger" : "default"} full />
               {customers.length > 0 && (
-                <ul className="mt-3 divide-y divide-gray-100">
+                <ul className="mt-3 divide-y divide-gray-100 dark:divide-gray-800">
                   {customers.slice(0, 5).map((c) => (
                     <li key={c.id} className="flex items-center justify-between py-2 text-sm">
-                      <span className="text-gray-700">{c.name}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{c.name}</span>
                       <span className="font-bold text-red-600">{formatEGP(c.current_debt)}</span>
                     </li>
                   ))}
@@ -240,10 +240,10 @@ function MiniStat({
   tone?: "default" | "warn" | "danger";
   full?: boolean;
 }) {
-  const toneClass = tone === "warn" ? "text-amber-600" : tone === "danger" ? "text-red-600" : "text-gray-900";
+  const toneClass = tone === "warn" ? "text-amber-600" : tone === "danger" ? "text-red-600" : "text-gray-900 dark:text-gray-100";
   return (
-    <div className={`rounded-xl bg-gray-50 p-2.5 ${full ? "text-center" : ""}`}>
-      <p className="text-[11px] text-gray-400">{label}</p>
+    <div className={`rounded-xl bg-gray-50 dark:bg-gray-800 p-2.5 ${full ? "text-center" : ""}`}>
+      <p className="text-[11px] text-gray-400 dark:text-gray-500">{label}</p>
       <p className={`mt-0.5 text-sm font-bold ${toneClass}`}>{value}</p>
     </div>
   );
@@ -262,8 +262,8 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-500">{label}</span>
-      <span className={`${bold ? "text-base font-bold" : "font-semibold"} ${tone === "danger" ? "text-red-600" : "text-gray-900"}`}>
+      <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
+      <span className={`${bold ? "text-base font-bold" : "font-semibold"} ${tone === "danger" ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>
         {value}
       </span>
     </div>
