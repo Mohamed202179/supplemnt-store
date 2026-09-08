@@ -170,25 +170,25 @@ export default function CustomersPage() {
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
         {showForm && (
-          <form onSubmit={addCustomer} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+          <form onSubmit={addCustomer} className="space-y-3 rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="اسم العميل *"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="رقم الهاتف"
               inputMode="tel"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ملاحظات (اختياري)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               type="submit"
@@ -204,24 +204,24 @@ export default function CustomersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث بالاسم أو رقم الهاتف..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
         />
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا يوجد عملاء</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا يوجد عملاء</p>
         ) : (
           <ul className="space-y-2">
             {filtered.map((c) => (
-              <li key={c.id} className="rounded-2xl bg-white p-3 shadow-sm">
+              <li key={c.id} className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                 {editingId === c.id ? (
                   <div className="space-y-2">
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="اسم العميل *"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                       autoFocus
                     />
                     <input
@@ -229,13 +229,13 @@ export default function CustomersPage() {
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="رقم الهاتف"
                       inputMode="tel"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                     />
                     <input
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       placeholder="ملاحظات"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                     />
                     <div className="flex gap-2">
                       <button
@@ -247,7 +247,7 @@ export default function CustomersPage() {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="flex-1 rounded-lg bg-gray-100 py-2 text-xs font-bold text-gray-600"
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         إلغاء
                       </button>
@@ -255,8 +255,8 @@ export default function CustomersPage() {
                   </div>
                 ) : payingId === c.id ? (
                   <div className="space-y-2">
-                    <p className="text-sm font-bold text-gray-900">{c.name}</p>
-                    <p className="text-xs text-gray-400">الدين الحالي: {formatEGP(c.current_debt)}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{c.name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">الدين الحالي: {formatEGP(c.current_debt)}</p>
                     <input
                       value={payAmount}
                       onChange={(e) => setPayAmount(e.target.value)}
@@ -265,7 +265,7 @@ export default function CustomersPage() {
                       min={0}
                       step="0.01"
                       placeholder="المبلغ المدفوع"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                       autoFocus
                     />
                     <div className="flex gap-2">
@@ -278,7 +278,7 @@ export default function CustomersPage() {
                       </button>
                       <button
                         onClick={() => setPayingId(null)}
-                        className="flex-1 rounded-lg bg-gray-100 py-2 text-xs font-bold text-gray-600"
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         إلغاء
                       </button>
@@ -289,18 +289,18 @@ export default function CustomersPage() {
                     <Link href={`/customers/${c.id}`} className="block active:opacity-70">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-gray-900">{c.name}</p>
-                          <p className="text-xs text-gray-400">{c.phone || "بدون رقم هاتف"}</p>
+                          <p className="font-bold text-gray-900 dark:text-gray-100">{c.name}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{c.phone || "بدون رقم هاتف"}</p>
                         </div>
                         <div className="text-left">
-                          <p className="text-xs text-gray-400">الرصيد المستحق</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">الرصيد المستحق</p>
                           <p className={`font-bold ${c.current_debt > 0 ? "text-red-600" : "text-brand-700"}`}>
                             {formatEGP(c.current_debt)}
                           </p>
                         </div>
                       </div>
                     </Link>
-                    <div className="mt-2 flex gap-2 border-t border-gray-100 pt-2">
+                    <div className="mt-2 flex gap-2 border-t border-gray-100 dark:border-gray-800 pt-2">
                       {c.current_debt > 0 && (
                         <button
                           onClick={() => startPayment(c)}
@@ -311,7 +311,7 @@ export default function CustomersPage() {
                       )}
                       <button
                         onClick={() => startEdit(c)}
-                        className="flex-1 rounded-lg bg-gray-100 py-2 text-center text-xs font-semibold text-gray-700"
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300"
                       >
                         تعديل
                       </button>
