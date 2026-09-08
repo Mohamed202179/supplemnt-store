@@ -263,9 +263,9 @@ export default function SalesPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-3">
+      <div className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">بيع جديد</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">بيع جديد</h1>
           <Link href="/sales/history" className="text-xs font-semibold text-brand-600">
             سجل المبيعات ←
           </Link>
@@ -291,7 +291,7 @@ export default function SalesPage() {
               setSelectedCustomer(null);
               setStep("products");
             }}
-            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white py-3 text-sm font-bold text-gray-600"
+            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
           >
             🧍 بيع نقدي (عميل بدون حساب)
           </button>
@@ -301,7 +301,7 @@ export default function SalesPage() {
               value={walkInName}
               onChange={(e) => setWalkInName(e.target.value)}
               placeholder="اسم العميل (اختياري)"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             />
           )}
 
@@ -309,7 +309,7 @@ export default function SalesPage() {
             value={customerSearch}
             onChange={(e) => setCustomerSearch(e.target.value)}
             placeholder="بحث عن عميل مسجل..."
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
 
           <ul className="space-y-2">
@@ -322,11 +322,11 @@ export default function SalesPage() {
                     setStep("products");
                   }}
                   className={`w-full rounded-xl border p-3 text-right text-sm ${
-                    selectedCustomer?.id === c.id ? "border-brand-500 bg-brand-50" : "border-gray-200 bg-white"
+                    selectedCustomer?.id === c.id ? "border-brand-500 bg-brand-50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                   }`}
                 >
-                  <p className="font-bold text-gray-900">{c.name}</p>
-                  <p className="text-xs text-gray-400">{c.phone || "-"}</p>
+                  <p className="font-bold text-gray-900 dark:text-gray-100">{c.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{c.phone || "-"}</p>
                 </button>
               </li>
             ))}
@@ -340,7 +340,7 @@ export default function SalesPage() {
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
             placeholder="بحث بالاسم أو الباركود..."
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             autoFocus
           />
 
@@ -348,7 +348,7 @@ export default function SalesPage() {
             {filteredGroups.map(({ group, variants }) => {
               const expanded = expandedGroupId === group.id;
               return (
-                <li key={group.id} className="rounded-xl bg-white shadow-sm">
+                <li key={group.id} className="rounded-xl bg-white dark:bg-gray-900 shadow-sm">
                   <button
                     onClick={() => setExpandedGroupId(expanded ? null : group.id)}
                     className="flex w-full items-center gap-3 p-3 text-right"
@@ -357,42 +357,42 @@ export default function SalesPage() {
                       <img
                         src={group.image_url}
                         alt={group.name}
-                        className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 object-cover"
+                        className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-lg text-gray-300">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-lg text-gray-300">
                         🛍️
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-gray-900">{group.name}</p>
-                      <p className="text-xs text-gray-400">{variants.length} طعم/حجم — اضغط للاختيار</p>
+                      <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{variants.length} طعم/حجم — اضغط للاختيار</p>
                     </div>
                     <span className="shrink-0 text-gray-300">{expanded ? "▲" : "▼"}</span>
                   </button>
 
                   {expanded && (
-                    <div className="space-y-2 border-t border-gray-100 p-3">
+                    <div className="space-y-2 border-t border-gray-100 dark:border-gray-800 p-3">
                       {variants.map((v) => {
                         const status = getStockStatus(v);
                         const inCart = cart.find((l) => l.product.id === v.id);
                         return (
                           <div
                             key={v.id}
-                            className="flex items-center justify-between rounded-lg bg-gray-50 p-2.5"
+                            className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5"
                           >
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold text-gray-800">
+                              <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-200">
                                 {v.flavor || "-"} {v.size ? `· ${v.size}` : ""}
                               </p>
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-gray-400 dark:text-gray-500">
                                 {formatEGP(v.selling_price)} · متاح {v.current_stock}
                               </p>
                             </div>
                             <button
                               disabled={status === "out"}
                               onClick={() => addToCart(v)}
-                              className="mr-2 shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:bg-gray-200 disabled:text-gray-400"
+                              className="mr-2 shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:bg-gray-200 disabled:text-gray-400 dark:text-gray-500"
                             >
                               {inCart ? `+ (${inCart.quantity})` : "إضافة"}
                             </button>
@@ -411,18 +411,18 @@ export default function SalesPage() {
               return (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm"
+                  className="flex items-center justify-between rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-gray-900">{p.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {formatEGP(p.selling_price)} · متاح {p.current_stock}
                     </p>
                   </div>
                   <button
                     disabled={status === "out"}
                     onClick={() => addToCart(p)}
-                    className="mr-2 shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:bg-gray-200 disabled:text-gray-400"
+                    className="mr-2 shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:bg-gray-200 disabled:text-gray-400 dark:text-gray-500"
                   >
                     {inCart ? `+ (${inCart.quantity})` : "إضافة"}
                   </button>
@@ -445,13 +445,13 @@ export default function SalesPage() {
       {step === "cart" && (
         <div className="space-y-3 p-4">
           {cart.length === 0 ? (
-            <p className="py-10 text-center text-sm text-gray-400">السلة فارغة</p>
+            <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">السلة فارغة</p>
           ) : (
             <ul className="space-y-2">
               {cart.map((line) => (
-                <li key={line.product.id} className="rounded-xl bg-white p-3 shadow-sm">
+                <li key={line.product.id} className="rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900">{productDisplayName(line.product)}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{productDisplayName(line.product)}</p>
                     <button onClick={() => removeLine(line.product.id)} className="text-xs text-red-500">
                       حذف
                     </button>
@@ -460,7 +460,7 @@ export default function SalesPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => changeQty(line.product.id, -1)}
-                        className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-600"
+                        className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-lg font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         −
                       </button>
@@ -468,7 +468,7 @@ export default function SalesPage() {
                       <button
                         onClick={() => changeQty(line.product.id, 1)}
                         disabled={line.quantity >= line.product.current_stock}
-                        className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-600 disabled:opacity-40"
+                        className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-lg font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500 disabled:opacity-40"
                       >
                         +
                       </button>
@@ -482,9 +482,9 @@ export default function SalesPage() {
             </ul>
           )}
 
-          <div className="rounded-xl bg-white p-4 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-gray-600">
+              <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
                 تاريخ ووقت العملية (لتسجيل مبيعات قديمة بأثر رجعي)
               </span>
               <input
@@ -492,27 +492,27 @@ export default function SalesPage() {
                 onChange={(e) => setSaleDate(e.target.value)}
                 type="datetime-local"
                 max={toLocalDatetimeInputValue(new Date())}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
             </label>
           </div>
 
-          <div className="space-y-2 rounded-xl bg-white p-4 shadow-sm">
+          <div className="space-y-2 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             <Row label="الإجمالي الفرعي" value={formatEGP(subtotal)} />
             <label className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">الخصم</span>
+              <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">الخصم</span>
               <input
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 type="number"
                 inputMode="decimal"
                 min={0}
-                className="w-24 rounded-lg border border-gray-200 px-2 py-1 text-left"
+                className="w-24 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1 text-left"
               />
             </label>
             <Row label="الإجمالي" value={formatEGP(total)} bold />
             <label className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">المبلغ المدفوع</span>
+              <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">المبلغ المدفوع</span>
               <input
                 value={paidAmount}
                 onChange={(e) => setPaidAmount(e.target.value)}
@@ -520,7 +520,7 @@ export default function SalesPage() {
                 inputMode="decimal"
                 min={0}
                 placeholder={String(total)}
-                className="w-24 rounded-lg border border-gray-200 px-2 py-1 text-left"
+                className="w-24 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1 text-left"
               />
             </label>
             <Row label="المتبقي (دين)" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} />
@@ -556,7 +556,7 @@ function StepPill({
     <button
       onClick={onClick}
       className={`flex-1 rounded-full py-1.5 ${
-        active ? "bg-brand-600 text-white" : done ? "bg-brand-50 text-brand-700" : "bg-gray-100 text-gray-400"
+        active ? "bg-brand-600 text-white" : done ? "bg-brand-50 text-brand-700" : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
       }`}
     >
       {children}
@@ -577,10 +577,10 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-gray-500">{label}</span>
+      <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
       <span
         className={`${bold ? "text-base font-bold" : "font-semibold"} ${
-          tone === "danger" ? "text-red-600" : "text-gray-900"
+          tone === "danger" ? "text-red-600" : "text-gray-900 dark:text-gray-100"
         }`}
       >
         {value}
