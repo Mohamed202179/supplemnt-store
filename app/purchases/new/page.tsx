@@ -241,8 +241,8 @@ function NewPurchasePageContent() {
 
   return (
     <div>
-      <div className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-3">
-        <h1 className="text-lg font-bold text-gray-900">شراء جديد</h1>
+      <div className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
+        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">شراء جديد</h1>
         <div className="mt-2 flex gap-2 text-xs font-semibold">
           <StepPill active={step === "supplier"} done={!!selectedSupplier || noSupplier} onClick={() => setStep("supplier")}>
             1. المورد
@@ -264,7 +264,7 @@ function NewPurchasePageContent() {
               setSelectedSupplier(null);
               setStep("products");
             }}
-            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white py-3 text-sm font-bold text-gray-600"
+            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
           >
             📦 شراء بدون مورد محدد
           </button>
@@ -273,7 +273,7 @@ function NewPurchasePageContent() {
             value={supplierSearch}
             onChange={(e) => setSupplierSearch(e.target.value)}
             placeholder="بحث عن مورد..."
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
           />
 
           <ul className="space-y-2">
@@ -286,11 +286,11 @@ function NewPurchasePageContent() {
                     setStep("products");
                   }}
                   className={`w-full rounded-xl border p-3 text-right text-sm ${
-                    selectedSupplier?.id === s.id ? "border-brand-500 bg-brand-50" : "border-gray-200 bg-white"
+                    selectedSupplier?.id === s.id ? "border-brand-500 bg-brand-50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                   }`}
                 >
-                  <p className="font-bold text-gray-900">{s.name}</p>
-                  <p className="text-xs text-gray-400">{s.company || s.phone || "-"}</p>
+                  <p className="font-bold text-gray-900 dark:text-gray-100">{s.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{s.company || s.phone || "-"}</p>
                 </button>
               </li>
             ))}
@@ -304,7 +304,7 @@ function NewPurchasePageContent() {
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
             placeholder="بحث بالاسم أو الباركود..."
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
             autoFocus
           />
 
@@ -323,12 +323,12 @@ function NewPurchasePageContent() {
                 value={newProductName}
                 onChange={(e) => setNewProductName(e.target.value)}
                 placeholder="اسم المنتج *"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
               <select
                 value={newProductCategory}
                 onChange={(e) => setNewProductCategory(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="">بدون تصنيف</option>
                 {categories.map((c) => (
@@ -345,7 +345,7 @@ function NewPurchasePageContent() {
                   inputMode="decimal"
                   min={1}
                   placeholder="الكمية المشتراة *"
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                 />
                 <input
                   value={newProductUnitCost}
@@ -355,7 +355,7 @@ function NewPurchasePageContent() {
                   min={0}
                   step="0.01"
                   placeholder="سعر شراء الوحدة"
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                 />
               </div>
               <input
@@ -366,7 +366,7 @@ function NewPurchasePageContent() {
                 min={0}
                 step="0.01"
                 placeholder="سعر البيع * (تحتاجه لاحقًا في نقطة البيع)"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
               <div className="flex gap-2">
                 <button
@@ -379,7 +379,7 @@ function NewPurchasePageContent() {
                 <button
                   type="button"
                   onClick={() => setShowNewProductForm(false)}
-                  className="flex-1 rounded-lg bg-gray-100 py-2 text-xs font-bold text-gray-600"
+                  className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                 >
                   إلغاء
                 </button>
@@ -391,10 +391,10 @@ function NewPurchasePageContent() {
             {filteredProducts.map((p) => {
               const inCart = cart.find((l) => l.product.id === p.id);
               return (
-                <li key={p.id} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm">
+                <li key={p.id} className="flex items-center justify-between rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-gray-900">{p.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       آخر سعر شراء: {formatEGP(p.purchase_price)} · متاح حاليًا {p.current_stock}
                     </p>
                   </div>
@@ -423,13 +423,13 @@ function NewPurchasePageContent() {
       {step === "cart" && (
         <div className="space-y-3 p-4">
           {cart.length === 0 ? (
-            <p className="py-10 text-center text-sm text-gray-400">لم تُضف منتجات بعد</p>
+            <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لم تُضف منتجات بعد</p>
           ) : (
             <ul className="space-y-2">
               {cart.map((line) => (
-                <li key={line.product.id} className="rounded-xl bg-white p-3 shadow-sm">
+                <li key={line.product.id} className="rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900">{line.product.name}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{line.product.name}</p>
                     <button onClick={() => removeLine(line.product.id)} className="text-xs text-red-500">
                       حذف
                     </button>
@@ -438,19 +438,19 @@ function NewPurchasePageContent() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => changeQty(line.product.id, -1)}
-                        className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-600"
+                        className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-lg font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         −
                       </button>
                       <span className="w-8 text-center font-bold">{line.quantity}</span>
                       <button
                         onClick={() => changeQty(line.product.id, 1)}
-                        className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-600"
+                        className="h-8 w-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-lg font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
                       >
                         +
                       </button>
                     </div>
-                    <label className="flex items-center gap-1 text-xs text-gray-500">
+                    <label className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       سعر الوحدة
                       <input
                         value={line.unitCost}
@@ -459,7 +459,7 @@ function NewPurchasePageContent() {
                         inputMode="decimal"
                         min={0}
                         step="0.01"
-                        className="w-20 rounded-lg border border-gray-200 px-2 py-1 text-left"
+                        className="w-20 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1 text-left"
                       />
                     </label>
                   </div>
@@ -471,22 +471,22 @@ function NewPurchasePageContent() {
             </ul>
           )}
 
-          <div className="space-y-2 rounded-xl bg-white p-4 shadow-sm">
+          <div className="space-y-2 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm">
             <Row label="الإجمالي الفرعي" value={formatEGP(subtotal)} />
             <label className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">الخصم</span>
+              <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">الخصم</span>
               <input
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 type="number"
                 inputMode="decimal"
                 min={0}
-                className="w-24 rounded-lg border border-gray-200 px-2 py-1 text-left"
+                className="w-24 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1 text-left"
               />
             </label>
             <Row label="الإجمالي" value={formatEGP(total)} bold />
             <label className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">المبلغ المدفوع</span>
+              <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">المبلغ المدفوع</span>
               <input
                 value={paidAmount}
                 onChange={(e) => setPaidAmount(e.target.value)}
@@ -494,7 +494,7 @@ function NewPurchasePageContent() {
                 inputMode="decimal"
                 min={0}
                 placeholder={String(total)}
-                className="w-24 rounded-lg border border-gray-200 px-2 py-1 text-left"
+                className="w-24 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1 text-left"
               />
             </label>
             <Row label="المتبقي (مستحق للمورد)" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} />
@@ -530,7 +530,7 @@ function StepPill({
     <button
       onClick={onClick}
       className={`flex-1 rounded-full py-1.5 ${
-        active ? "bg-brand-600 text-white" : done ? "bg-brand-50 text-brand-700" : "bg-gray-100 text-gray-400"
+        active ? "bg-brand-600 text-white" : done ? "bg-brand-50 text-brand-700" : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
       }`}
     >
       {children}
@@ -541,8 +541,8 @@ function StepPill({
 function Row({ label, value, bold, tone }: { label: string; value: string; bold?: boolean; tone?: "default" | "danger" }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className={`${bold ? "text-base font-bold" : "font-semibold"} ${tone === "danger" ? "text-red-600" : "text-gray-900"}`}>
+      <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
+      <span className={`${bold ? "text-base font-bold" : "font-semibold"} ${tone === "danger" ? "text-red-600" : "text-gray-900 dark:text-gray-100"}`}>
         {value}
       </span>
     </div>
