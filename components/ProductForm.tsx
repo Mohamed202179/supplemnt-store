@@ -210,24 +210,24 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       )}
 
       <div>
-        <span className="mb-1.5 block text-xs font-semibold text-gray-600">صورة المنتج (اختياري)</span>
+        <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">صورة المنتج (اختياري)</span>
         {imagePreview ? (
           <div className="relative w-full">
             <img
               src={imagePreview}
               alt="معاينة المنتج"
-              className="h-40 w-full rounded-xl border border-gray-200 object-cover"
+              className="h-40 w-full rounded-xl border border-gray-200 dark:border-gray-700 object-cover"
             />
             <button
               type="button"
               onClick={removeImage}
-              className="absolute left-2 top-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-red-600 shadow"
+              className="absolute left-2 top-2 rounded-full bg-white dark:bg-gray-900 px-3 py-1 text-xs font-bold text-red-600 shadow"
             >
               إزالة
             </button>
           </div>
         ) : (
-          <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400">
+          <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
             <span className="text-2xl">📷</span>
             <span className="text-xs font-semibold">اضغط لإضافة صورة</span>
             <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
@@ -235,8 +235,8 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         )}
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-        <span className="mb-2 block text-xs font-semibold text-gray-600">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+        <span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
           هل هذا المنتج له أطعمة أو أحجام مختلفة؟
         </span>
         <div className="flex gap-2">
@@ -244,7 +244,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             type="button"
             onClick={() => setGroupMode("none")}
             className={`flex-1 rounded-lg py-2 text-xs font-bold ${
-              groupMode === "none" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+              groupMode === "none" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
             }`}
           >
             منتج مستقل
@@ -254,7 +254,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             onClick={() => setGroupMode("existing")}
             disabled={groups.length === 0}
             className={`flex-1 rounded-lg py-2 text-xs font-bold disabled:opacity-40 ${
-              groupMode === "existing" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+              groupMode === "existing" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
             }`}
           >
             جزء من مجموعة موجودة
@@ -263,7 +263,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             type="button"
             onClick={() => setGroupMode("new")}
             className={`flex-1 rounded-lg py-2 text-xs font-bold ${
-              groupMode === "new" ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
+              groupMode === "new" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
             }`}
           >
             + مجموعة جديدة
@@ -295,7 +295,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         )}
 
         {groupMode !== "none" && (
-          <p className="mt-2 text-[11px] text-gray-400">
+          <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
             استخدم حقلي "النكهة" و"الحجم" تحت عشان تميّز هذا الطعم/الحجم عن باقي المجموعة.
           </p>
         )}
@@ -425,7 +425,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-gray-600">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">{label}</span>
       {children}
     </label>
   );
