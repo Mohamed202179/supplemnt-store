@@ -38,27 +38,27 @@ export default function DebtsPage() {
         </div>
 
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : customers.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400">لا توجد مديونيات حالياً 🎉</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد مديونيات حالياً 🎉</p>
         ) : (
           <ul className="space-y-2">
             {customers.map((c) => (
               <li key={c.id}>
                 <Link
                   href={`/customers/${c.id}`}
-                  className="block rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50"
+                  className="block rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm active:bg-gray-50 dark:bg-gray-800"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-gray-900">{c.name}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="font-bold text-gray-900 dark:text-gray-100">{c.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {c.last_transaction_at ? `آخر عملية: ${formatDate(c.last_transaction_at)}` : "لا توجد عمليات"}
                       </p>
                     </div>
                     <span className="font-bold text-red-600">{formatEGP(c.current_debt)}</span>
                   </div>
-                  <div className="mt-1 text-xs text-gray-400">
+                  <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                     إجمالي المشتريات: {formatEGP(c.total_purchases)}
                   </div>
                 </Link>
