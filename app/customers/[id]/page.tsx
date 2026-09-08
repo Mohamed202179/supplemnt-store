@@ -79,22 +79,22 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
     load();
   }
 
-  if (loading) return <p className="p-10 text-center text-sm text-gray-400">جارِ التحميل...</p>;
-  if (!customer) return <p className="p-10 text-center text-sm text-gray-400">العميل غير موجود</p>;
+  if (loading) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>;
+  if (!customer) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">العميل غير موجود</p>;
 
   return (
     <div>
       <PageHeader title={customer.name} />
 
       <div className="space-y-4 p-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400">{customer.phone || "بدون رقم هاتف"}</p>
-          {customer.notes && <p className="mt-1 text-xs text-gray-500">{customer.notes}</p>}
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <p className="text-xs text-gray-400 dark:text-gray-500">{customer.phone || "بدون رقم هاتف"}</p>
+          {customer.notes && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{customer.notes}</p>}
 
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-xs text-gray-400">إجمالي المشتريات</p>
-              <p className="mt-1 font-bold text-gray-900">{formatEGP(customer.total_purchases)}</p>
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
+              <p className="text-xs text-gray-400 dark:text-gray-500">إجمالي المشتريات</p>
+              <p className="mt-1 font-bold text-gray-900 dark:text-gray-100">{formatEGP(customer.total_purchases)}</p>
             </div>
             <div className="rounded-xl bg-red-50 p-3">
               <p className="text-xs text-red-400">الرصيد المستحق</p>
@@ -112,7 +112,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
           )}
 
           {showPayment && (
-            <form onSubmit={recordPayment} className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+            <form onSubmit={recordPayment} className="mt-3 space-y-2 border-t border-gray-100 dark:border-gray-800 pt-3">
               {error && <p className="text-xs text-red-600">{error}</p>}
               <input
                 value={amount}
@@ -122,7 +122,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 min={0}
                 step="0.01"
                 placeholder="المبلغ المدفوع"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
               <button
                 type="submit"
@@ -135,15 +135,15 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
           )}
         </div>
 
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-bold text-gray-900">سجل المدفوعات</h2>
+        <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">سجل المدفوعات</h2>
           {payments.length === 0 ? (
-            <p className="py-3 text-center text-xs text-gray-400">لا توجد مدفوعات مسجلة</p>
+            <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد مدفوعات مسجلة</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-gray-500">{formatDate(p.created_at)}</span>
+                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
                   <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
                 </li>
               ))}
@@ -151,22 +151,22 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
           )}
         </section>
 
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-bold text-gray-900">سجل المبيعات</h2>
+        <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">سجل المبيعات</h2>
           {sales.length === 0 ? (
-            <p className="py-3 text-center text-xs text-gray-400">لا توجد مبيعات مسجلة</p>
+            <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد مبيعات مسجلة</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {sales.map((s) => (
                 <li key={s.id} className="py-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">
+                    <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {formatDate(s.created_at)}{" "}
                       {s.status === "cancelled" && <span className="text-red-500">(ملغاة)</span>}
                     </span>
-                    <span className="font-bold text-gray-900">{formatEGP(s.total)}</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(s.total)}</span>
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     مدفوع {formatEGP(s.paid_amount)} · متبقي {formatEGP(s.remaining_amount)}
                   </p>
                 </li>
