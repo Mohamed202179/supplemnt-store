@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, ShoppingCart, Package, Users, Menu, LucideIcon } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { TranslationKey } from "@/lib/i18n";
 
-const items: { href: string; labelKey: TranslationKey; icon: string }[] = [
-  { href: "/", labelKey: "nav_home", icon: "🏠" },
-  { href: "/sales", labelKey: "nav_sales", icon: "🧾" },
-  { href: "/inventory", labelKey: "nav_inventory", icon: "📦" },
-  { href: "/customers", labelKey: "nav_customers", icon: "👥" },
-  { href: "/more", labelKey: "nav_more", icon: "☰" },
+const items: { href: string; labelKey: TranslationKey; Icon: LucideIcon }[] = [
+  { href: "/", labelKey: "nav_home", Icon: Home },
+  { href: "/sales", labelKey: "nav_sales", Icon: ShoppingCart },
+  { href: "/inventory", labelKey: "nav_inventory", Icon: Package },
+  { href: "/customers", labelKey: "nav_customers", Icon: Users },
+  { href: "/more", labelKey: "nav_more", Icon: Menu },
 ];
 
 const morePrefixes = ["/more", "/purchases", "/suppliers", "/expenses", "/reports", "/debts", "/categories", "/products", "/settings"];
@@ -31,6 +32,7 @@ export default function BottomNav() {
           } else {
             active = pathname.startsWith(item.href);
           }
+          const Icon = item.Icon;
           return (
             <li key={item.href}>
               <Link
@@ -39,7 +41,7 @@ export default function BottomNav() {
                   active ? "text-brand-600" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
-                <span className="text-xl leading-none">{item.icon}</span>
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
                 {t(item.labelKey)}
               </Link>
             </li>
