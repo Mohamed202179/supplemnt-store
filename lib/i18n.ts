@@ -69,6 +69,11 @@ const ar = {
   item_settings_label: "الإعدادات",
   item_settings_desc: "تغيير كلمة المرور واللغة",
 
+  more_section_catalog: "الكتالوج",
+  more_section_purchasing: "المشتريات والموردين",
+  more_section_finance: "الديون والتقارير",
+  more_section_account: "الحساب",
+
   // Settings
   settings_title: "الإعدادات",
   settings_email_label: "البريد الإلكتروني المسجّل",
@@ -169,6 +174,11 @@ const en: Record<keyof typeof ar, string> = {
   item_categories_desc: "Manage product categories",
   item_settings_label: "Settings",
   item_settings_desc: "Change password and language",
+
+  more_section_catalog: "Catalog",
+  more_section_purchasing: "Purchases & Suppliers",
+  more_section_finance: "Debts & Reports",
+  more_section_account: "Account",
 
   settings_title: "Settings",
   settings_email_label: "Registered Email",
