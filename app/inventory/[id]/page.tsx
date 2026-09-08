@@ -74,32 +74,32 @@ export default function ProductStockPage({ params }: { params: { id: string } })
     load();
   }
 
-  if (loading) return <p className="p-10 text-center text-sm text-gray-400">جارِ التحميل...</p>;
-  if (!product) return <p className="p-10 text-center text-sm text-gray-400">المنتج غير موجود</p>;
+  if (loading) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>;
+  if (!product) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">المنتج غير موجود</p>;
 
   return (
     <div>
       <PageHeader title={product.name} />
 
       <div className="space-y-4 p-4">
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-400">{product.categories?.name || "بدون تصنيف"}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{product.categories?.name || "بدون تصنيف"}</p>
             <StockBadge status={getStockStatus(product)} />
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-lg bg-gray-50 py-2">
-              <p className="text-gray-400">الكمية الحالية</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-900">{product.current_stock}</p>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
+              <p className="text-gray-400 dark:text-gray-500">الكمية الحالية</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">{product.current_stock}</p>
             </div>
-            <div className="rounded-lg bg-gray-50 py-2">
-              <p className="text-gray-400">الحد الأدنى</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-900">{product.min_stock}</p>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
+              <p className="text-gray-400 dark:text-gray-500">الحد الأدنى</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">{product.min_stock}</p>
             </div>
-            <div className="rounded-lg bg-gray-50 py-2">
-              <p className="text-gray-400">قيمة المخزون منه (بسعر الشراء)</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-900">
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
+              <p className="text-gray-400 dark:text-gray-500">قيمة المخزون منه (بسعر الشراء)</p>
+              <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
                 {formatEGP(product.current_stock * product.purchase_price)}
               </p>
             </div>
@@ -115,26 +115,26 @@ export default function ProductStockPage({ params }: { params: { id: string } })
           )}
 
           {isOwner && showAdjust && (
-            <form onSubmit={submitAdjustment} className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+            <form onSubmit={submitAdjustment} className="mt-3 space-y-2 border-t border-gray-100 dark:border-gray-800 pt-3">
               {error && <p className="text-xs text-red-600">{error}</p>}
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-gray-600">الكمية الجديدة</span>
+                <span className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">الكمية الجديدة</span>
                 <input
                   value={newStock}
                   onChange={(e) => setNewStock(e.target.value)}
                   type="number"
                   inputMode="decimal"
                   min={0}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-gray-600">سبب التعديل (اختياري)</span>
+                <span className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">سبب التعديل (اختياري)</span>
                 <input
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="مثال: جرد، تالف، خطأ إدخال..."
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm"
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
                 />
               </label>
               <button
@@ -148,25 +148,25 @@ export default function ProductStockPage({ params }: { params: { id: string } })
           )}
         </div>
 
-        <section className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-bold text-gray-900">سجل حركة المخزون</h2>
+        <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">سجل حركة المخزون</h2>
           {movements.length === 0 ? (
-            <p className="py-4 text-center text-xs text-gray-400">لا توجد حركات مسجلة بعد</p>
+            <p className="py-4 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد حركات مسجلة بعد</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {movements.map((m) => (
                 <li key={m.id} className="py-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-800">{MOVEMENT_TYPE_LABELS[m.type]}</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-200">{MOVEMENT_TYPE_LABELS[m.type]}</span>
                     <span className={`font-bold ${m.quantity >= 0 ? "text-brand-700" : "text-red-600"}`}>
                       {m.quantity >= 0 ? "+" : ""}
                       {m.quantity}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     {m.previous_stock} ← {m.new_stock} · {formatDateTime(m.created_at)}
                   </p>
-                  {m.reference && <p className="text-xs text-gray-400">{m.reference}</p>}
+                  {m.reference && <p className="text-xs text-gray-400 dark:text-gray-500">{m.reference}</p>}
                 </li>
               ))}
             </ul>
