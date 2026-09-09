@@ -411,12 +411,21 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
           border-radius: 0.75rem;
           border: 1px solid #e5e7eb;
           background: white;
+          color: #111827;
           padding: 0.75rem 1rem;
           font-size: 0.95rem;
         }
         .input:focus {
           outline: none;
           border-color: #12a05a;
+        }
+        .dark .input {
+          background: #1f2937;
+          border-color: #374151;
+          color: #f3f4f6;
+        }
+        .dark .input::placeholder {
+          color: #9ca3af;
         }
       `}</style>
     </form>
