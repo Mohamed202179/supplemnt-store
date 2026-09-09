@@ -7,17 +7,22 @@ import { formatEGP, getStockStatus, Product, Category, ProductGroup } from "@/li
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
 import OwnerGate from "@/components/OwnerGate";
-import { ChevronUp, ChevronDown, ShoppingBag, Package } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ShoppingBag, Package, Tag, FolderOpen } from "lucide-react";
+
+const NO_CATEGORY = "__none__";
 
 function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  // null = show the category grid; otherwise a category id (or NO_CATEGORY
+  // for uncategorized products) selects which category's products to browse.
+  const [viewCategoryId, setViewCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -55,20 +60,36 @@ function ProductsPageContent() {
     });
   }
 
+  // ---------- Category grid (landing view) ----------
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    let uncategorized = 0;
+    for (const p of products) {
+      if (p.category_id) {
+        counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
+      } else {
+        uncategorized++;
+      }
+    }
+    return { counts, uncategorized };
+  }, [products]);
+
+  // ---------- Filtered list (inside a selected category) ----------
   function matchesSearchAndFilters(p: Product) {
     const matchesSearch =
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.brand ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (p.barcode ?? "").includes(search);
-    const matchesCategory = categoryFilter === "all" || p.category_id === categoryFilter;
+    const matchesCategory =
+      viewCategoryId === NO_CATEGORY ? !p.category_id : p.category_id === viewCategoryId;
     const matchesLowStock = !lowStockOnly || p.current_stock <= p.min_stock;
     return matchesSearch && matchesCategory && matchesLowStock;
   }
 
   const standaloneProducts = useMemo(
     () => products.filter((p) => !p.group_id && matchesSearchAndFilters(p)),
-    [products, search, categoryFilter, lowStockOnly]
+    [products, search, viewCategoryId, lowStockOnly]
   );
 
   const visibleGroups = useMemo(() => {
@@ -79,14 +100,18 @@ function ProductsPageContent() {
         return { group: g, variants, matchingVariants };
       })
       .filter((entry) => entry.variants.length > 0 && entry.matchingVariants.length > 0);
-  }, [groups, products, search, categoryFilter, lowStockOnly]);
+  }, [groups, products, search, viewCategoryId, lowStockOnly]);
 
   const isEmpty = standaloneProducts.length === 0 && visibleGroups.length === 0;
+  const currentCategoryName =
+    viewCategoryId === NO_CATEGORY
+      ? "بدون تصنيف"
+      : categories.find((c) => c.id === viewCategoryId)?.name ?? "";
 
   return (
     <div>
       <PageHeader
-        title="المنتجات"
+        title={viewCategoryId === null ? "المنتجات" : currentCategoryName}
         action={
           <Link
             href="/products/new"
@@ -98,173 +123,206 @@ function ProductsPageContent() {
       />
 
       <div className="space-y-3 p-4">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="بحث بالاسم أو الماركة أو الباركود..."
-          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none"
-        />
-
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setCategoryFilter("all")}
-            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
-              categoryFilter === "all" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-            }`}
-          >
-            الكل
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCategoryFilter(c.id)}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
-                categoryFilter === c.id ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        <label className="flex w-fit items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
-          <input
-            type="checkbox"
-            checked={lowStockOnly}
-            onChange={(e) => setLowStockOnly(e.target.checked)}
-            className="h-4 w-4 accent-brand-600"
-          />
-          عرض المخزون المنخفض فقط
-        </label>
-
         {loading ? (
           <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
-        ) : isEmpty ? (
-          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد منتجات مطابقة</p>
-        ) : (
-          <div className="space-y-2">
-            {visibleGroups.map(({ group, variants }) => {
-              const expanded = expandedGroups.has(group.id);
-              const totalStock = variants.reduce((sum, v) => sum + v.current_stock, 0);
-              return (
-                <div key={group.id} className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm">
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex w-full items-center gap-3 p-3 text-right"
-                  >
-                    {group.image_url ? (
-                      <img
-                        src={group.image_url}
-                        alt={group.name}
-                        className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
-                        <ShoppingBag className="h-6 w-6" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">{group.categories?.name || "بدون تصنيف"}</p>
-                      <p className="mt-1 text-xs font-semibold text-brand-600">
-                        {variants.length} طعم/حجم · إجمالي الكمية {totalStock}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-gray-300 dark:text-gray-600">
-                      {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </span>
-                  </button>
-
-                  {expanded && (
-                    <div className="space-y-2 border-t border-gray-100 dark:border-gray-800 p-3">
-                      {variants.map((p) => (
-                        <div key={p.id} className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                              {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
-                            </p>
-                            <StockBadge status={getStockStatus(p)} />
-                          </div>
-                          <div className="mt-1 flex items-center justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                              الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
-                            </span>
-                            <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
-                          </div>
-                          <div className="mt-2 flex gap-2">
-                            <Link
-                              href={`/products/${p.id}/edit`}
-                              className="flex-1 rounded-lg bg-white dark:bg-gray-900 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-                            >
-                              تعديل
-                            </Link>
-                            <button
-                              onClick={() => deactivate(p.id)}
-                              className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
-                            >
-                              إيقاف
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      <Link
-                        href={`/products/new?group=${group.id}`}
-                        className="block w-full rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 py-2.5 text-center text-xs font-bold text-brand-700"
-                      >
-                        + أضف طعم/حجم جديد لنفس المنتج
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {standaloneProducts.map((p) => (
-              <div key={p.id} className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <div className="flex items-start gap-3">
-                  {p.image_url ? (
-                    <img
-                      src={p.image_url}
-                      alt={p.name}
-                      className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
-                      <Package className="h-6 w-6" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{p.categories?.name || "بدون تصنيف"}</p>
-                  </div>
-                  <StockBadge status={getStockStatus(p)} />
-                </div>
-                <div className="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-2 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                    الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
-                  </span>
-                  <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <Link
-                    href={`/products/${p.id}/edit`}
-                    className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300"
-                  >
-                    تعديل
-                  </Link>
-                  <button
-                    onClick={() => deactivate(p.id)}
-                    className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
-                  >
-                    إيقاف
-                  </button>
-                </div>
-              </div>
+        ) : viewCategoryId === null ? (
+          // ---------- Category grid ----------
+          <div className="grid grid-cols-2 gap-3">
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setViewCategoryId(c.id)}
+                className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
+                  <Tag className="h-5 w-5" />
+                </span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{c.name}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {categoryCounts.counts.get(c.id) ?? 0} منتج
+                </span>
+              </button>
             ))}
+
+            {categoryCounts.uncategorized > 0 && (
+              <button
+                onClick={() => setViewCategoryId(NO_CATEGORY)}
+                className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                  <FolderOpen className="h-5 w-5" />
+                </span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">بدون تصنيف</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {categoryCounts.uncategorized} منتج
+                </span>
+              </button>
+            )}
+
+            {categories.length === 0 && categoryCounts.uncategorized === 0 && (
+              <p className="col-span-2 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+                لا توجد تصنيفات أو منتجات بعد
+              </p>
+            )}
           </div>
+        ) : (
+          // ---------- Products inside the selected category ----------
+          <>
+            <button
+              onClick={() => {
+                setViewCategoryId(null);
+                setSearch("");
+              }}
+              className="flex items-center gap-1 text-xs font-semibold text-brand-600"
+            >
+              <ChevronLeft className="h-4 w-4 rotate-180" />
+              كل التصنيفات
+            </button>
+
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="بحث بالاسم أو الماركة أو الباركود..."
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm shadow-sm focus:border-brand-500 focus:outline-none dark:text-gray-100"
+            />
+
+            <label className="flex w-fit items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+              <input
+                type="checkbox"
+                checked={lowStockOnly}
+                onChange={(e) => setLowStockOnly(e.target.checked)}
+                className="h-4 w-4 accent-brand-600"
+              />
+              عرض المخزون المنخفض فقط
+            </label>
+
+            {isEmpty ? (
+              <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد منتجات مطابقة</p>
+            ) : (
+              <div className="space-y-2">
+                {visibleGroups.map(({ group, variants }) => {
+                  const expanded = expandedGroups.has(group.id);
+                  const totalStock = variants.reduce((sum, v) => sum + v.current_stock, 0);
+                  return (
+                    <div key={group.id} className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm">
+                      <button
+                        onClick={() => toggleGroup(group.id)}
+                        className="flex w-full items-center gap-3 p-3 text-right"
+                      >
+                        {group.image_url ? (
+                          <img
+                            src={group.image_url}
+                            alt={group.name}
+                            className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                            <ShoppingBag className="h-6 w-6" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{group.categories?.name || "بدون تصنيف"}</p>
+                          <p className="mt-1 text-xs font-semibold text-brand-600">
+                            {variants.length} طعم/حجم · إجمالي الكمية {totalStock}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-gray-300 dark:text-gray-600">
+                          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </span>
+                      </button>
+
+                      {expanded && (
+                        <div className="space-y-2 border-t border-gray-100 dark:border-gray-800 p-3">
+                          {variants.map((p) => (
+                            <div key={p.id} className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                  {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
+                                </p>
+                                <StockBadge status={getStockStatus(p)} />
+                              </div>
+                              <div className="mt-1 flex items-center justify-between text-sm">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
+                                </span>
+                                <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                              </div>
+                              <div className="mt-2 flex gap-2">
+                                <Link
+                                  href={`/products/${p.id}/edit`}
+                                  className="flex-1 rounded-lg bg-white dark:bg-gray-900 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                                >
+                                  تعديل
+                                </Link>
+                                <button
+                                  onClick={() => deactivate(p.id)}
+                                  className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
+                                >
+                                  إيقاف
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <Link
+                            href={`/products/new?group=${group.id}`}
+                            className="block w-full rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 py-2.5 text-center text-xs font-bold text-brand-700"
+                          >
+                            + أضف طعم/حجم جديد لنفس المنتج
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {standaloneProducts.map((p) => (
+                  <div key={p.id} className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={p.name}
+                          className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                          <Package className="h-6 w-6" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
+                        </p>
+                      </div>
+                      <StockBadge status={getStockStatus(p)} />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-2 text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
+                      </span>
+                      <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <Link
+                        href={`/products/${p.id}/edit`}
+                        className="flex-1 rounded-lg bg-gray-100 dark:bg-gray-800 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300"
+                      >
+                        تعديل
+                      </Link>
+                      <button
+                        onClick={() => deactivate(p.id)}
+                        className="flex-1 rounded-lg bg-red-50 py-2 text-center text-xs font-semibold text-red-600"
+                      >
+                        إيقاف
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
