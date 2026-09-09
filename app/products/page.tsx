@@ -7,6 +7,7 @@ import { formatEGP, getStockStatus, Product, Category, ProductGroup } from "@/li
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
 import OwnerGate from "@/components/OwnerGate";
+import { ChevronUp, ChevronDown, ShoppingBag, Package } from "lucide-react";
 
 function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -158,8 +159,8 @@ function ProductsPageContent() {
                         className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
                       />
                     ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-xl text-gray-300">
-                        🛍️
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                        <ShoppingBag className="h-6 w-6" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
@@ -169,7 +170,9 @@ function ProductsPageContent() {
                         {variants.length} طعم/حجم · إجمالي الكمية {totalStock}
                       </p>
                     </div>
-                    <span className="shrink-0 text-gray-300">{expanded ? "▲" : "▼"}</span>
+                    <span className="shrink-0 text-gray-300 dark:text-gray-600">
+                      {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </span>
                   </button>
 
                   {expanded && (
@@ -226,8 +229,8 @@ function ProductsPageContent() {
                       className="h-14 w-14 shrink-0 rounded-xl border border-gray-100 dark:border-gray-800 object-cover"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-xl text-gray-300">
-                      📦
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                      <Package className="h-6 w-6" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
