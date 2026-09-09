@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
 import OwnerGate from "@/components/OwnerGate";
+import { PackageSearch } from "lucide-react";
 
 type Step = "supplier" | "products" | "cart";
 
@@ -264,9 +265,10 @@ function NewPurchasePageContent() {
               setSelectedSupplier(null);
               setStep("products");
             }}
-            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
+            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400"
           >
-            📦 شراء بدون مورد محدد
+            <PackageSearch className="mx-auto mb-1 h-5 w-5" />
+            شراء بدون مورد محدد
           </button>
 
           <input
