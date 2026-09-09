@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup } from "@/lib/types";
+import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, User } from "lucide-react";
 
 type Step = "customer" | "products" | "cart";
 
@@ -266,8 +267,9 @@ export default function SalesPage() {
       <div className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">بيع جديد</h1>
-          <Link href="/sales/history" className="text-xs font-semibold text-brand-600">
-            سجل المبيعات ←
+          <Link href="/sales/history" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600">
+            سجل المبيعات
+            <ChevronLeft className="h-3.5 w-3.5" />
           </Link>
         </div>
         <div className="mt-2 flex gap-2 text-xs font-semibold">
@@ -291,9 +293,10 @@ export default function SalesPage() {
               setSelectedCustomer(null);
               setStep("products");
             }}
-            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 dark:text-gray-500"
+            className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white dark:bg-gray-900 py-3 text-sm font-bold text-gray-600 dark:text-gray-400"
           >
-            🧍 بيع نقدي (عميل بدون حساب)
+            <User className="mx-auto mb-1 h-5 w-5" />
+            بيع نقدي (عميل بدون حساب)
           </button>
 
           {walkIn && (
@@ -360,15 +363,17 @@ export default function SalesPage() {
                         className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-lg text-gray-300">
-                        🛍️
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                        <ShoppingBag className="h-5 w-5" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">{variants.length} طعم/حجم — اضغط للاختيار</p>
                     </div>
-                    <span className="shrink-0 text-gray-300">{expanded ? "▲" : "▼"}</span>
+                    <span className="shrink-0 text-gray-300 dark:text-gray-600">
+                      {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </span>
                   </button>
 
                   {expanded && (
