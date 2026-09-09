@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { CheckCircle2 } from "lucide-react";
 import { formatEGP, formatDate, Customer } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 
@@ -40,7 +41,10 @@ export default function DebtsPage() {
         {loading ? (
           <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : customers.length === 0 ? (
-          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد مديونيات حالياً 🎉</p>
+          <div className="py-10 text-center">
+            <CheckCircle2 className="mx-auto h-8 w-8 text-brand-500" />
+            <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">لا توجد مديونيات حالياً</p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {customers.map((c) => (
