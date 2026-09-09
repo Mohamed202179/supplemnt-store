@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Category, Product, ProductGroup } from "@/lib/types";
+import { Camera } from "lucide-react";
 
 interface Props {
   initial?: Product;
@@ -228,7 +229,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
           </div>
         ) : (
           <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
-            <span className="text-2xl">📷</span>
+            <Camera className="h-7 w-7" />
             <span className="text-xs font-semibold">اضغط لإضافة صورة</span>
             <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
           </label>
