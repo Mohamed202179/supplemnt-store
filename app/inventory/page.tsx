@@ -224,15 +224,30 @@ export default function InventoryPage() {
                         <Link
                           key={p.id}
                           href={`/inventory/${p.id}`}
-                          className="block rounded-xl bg-gray-50 dark:bg-gray-800 p-3 active:bg-gray-100 dark:bg-gray-800"
+                          className="block rounded-xl bg-gray-50 dark:bg-gray-800 p-3 active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                              {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
-                            </p>
-                            <StockBadge status={getStockStatus(p)} />
+                          <div className="flex items-start gap-3">
+                            {p.image_url ? (
+                              <img
+                                src={p.image_url}
+                                alt={p.flavor ?? ""}
+                                className="h-11 w-11 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-gray-900 text-gray-300 dark:text-gray-600">
+                                <Package className="h-5 w-5" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                  {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
+                                </p>
+                                <StockBadge status={getStockStatus(p)} />
+                              </div>
+                              <ExpiryNote expiryDate={p.expiry_date} />
+                            </div>
                           </div>
-                          <ExpiryNote expiryDate={p.expiry_date} />
                           <div className="mt-2 grid grid-cols-2 gap-2 text-center text-xs">
                             <div className="rounded-lg bg-white dark:bg-gray-900 py-1.5">
                               <p className="text-gray-400 dark:text-gray-500">الكمية</p>
