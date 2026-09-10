@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup } from "@/lib/types";
-import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, User } from "lucide-react";
+import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus } from "lucide-react";
 
 type Step = "customer" | "products" | "cart";
 
@@ -27,6 +27,12 @@ export default function SalesPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [walkIn, setWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState("");
+
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [savingNewCustomer, setSavingNewCustomer] = useState(false);
+  const [newCustomerError, setNewCustomerError] = useState("");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
@@ -149,6 +155,43 @@ export default function SalesPage() {
 
   function removeLine(productId: string) {
     setCart((prev) => prev.filter((l) => l.product.id !== productId));
+  }
+
+  async function createNewCustomer(e: React.FormEvent) {
+    e.preventDefault();
+    setNewCustomerError("");
+
+    if (!newCustomerName.trim()) {
+      setNewCustomerError("اسم العميل مطلوب");
+      return;
+    }
+
+    setSavingNewCustomer(true);
+    const { data: customer, error: insertErr } = await supabase
+      .from("customers")
+      .insert({
+        name: newCustomerName.trim(),
+        phone: newCustomerPhone.trim() || null,
+        current_debt: 0,
+        total_purchases: 0,
+      })
+      .select()
+      .single();
+    setSavingNewCustomer(false);
+
+    if (insertErr || !customer) {
+      setNewCustomerError("حدث خطأ أثناء حفظ العميل، حاول مرة أخرى");
+      return;
+    }
+
+    const newCustomer = customer as Customer;
+    setCustomers((prev) => [...prev, newCustomer]);
+    setSelectedCustomer(newCustomer);
+    setWalkIn(false);
+    setShowNewCustomerForm(false);
+    setNewCustomerName("");
+    setNewCustomerPhone("");
+    setStep("products");
   }
 
   async function completeSale() {
@@ -299,6 +342,43 @@ export default function SalesPage() {
             بيع نقدي (عميل بدون حساب)
           </button>
 
+          <button
+            onClick={() => setShowNewCustomerForm((s) => !s)}
+            className="w-full rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 dark:bg-brand-500/10 py-3 text-sm font-bold text-brand-700 dark:text-brand-300"
+          >
+            <UserPlus className="mx-auto mb-1 h-5 w-5" />
+            {showNewCustomerForm ? "إغلاق" : "+ عميل جديد (يُحفظ تلقائيًا)"}
+          </button>
+
+          {showNewCustomerForm && (
+            <form
+              onSubmit={createNewCustomer}
+              className="space-y-2 rounded-xl border border-brand-200 dark:border-brand-800 bg-white dark:bg-gray-900 p-3"
+            >
+              {newCustomerError && <p className="text-xs text-red-600">{newCustomerError}</p>}
+              <input
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                placeholder="اسم العميل *"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
+              />
+              <input
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                placeholder="رقم الهاتف (اختياري)"
+                inputMode="tel"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
+              />
+              <button
+                type="submit"
+                disabled={savingNewCustomer}
+                className="w-full rounded-xl bg-brand-600 py-3 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {savingNewCustomer ? "جارِ الحفظ..." : "حفظ واختيار العميل"}
+              </button>
+            </form>
+          )}
+
           {walkIn && (
             <input
               value={walkInName}
@@ -384,8 +464,19 @@ export default function SalesPage() {
                         return (
                           <div
                             key={v.id}
-                            className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5"
+                            className="flex items-center gap-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5"
                           >
+                            {v.image_url ? (
+                              <img
+                                src={v.image_url}
+                                alt={v.flavor ?? ""}
+                                className="h-9 w-9 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-gray-900 text-gray-300 dark:text-gray-600">
+                                <Package className="h-4 w-4" />
+                              </div>
+                            )}
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-200">
                                 {v.flavor || "-"} {v.size ? `· ${v.size}` : ""}
@@ -416,8 +507,19 @@ export default function SalesPage() {
               return (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm"
+                  className="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm"
                 >
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="h-11 w-11 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                      <Package className="h-5 w-5" />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -455,9 +557,20 @@ export default function SalesPage() {
             <ul className="space-y-2">
               {cart.map((line) => (
                 <li key={line.product.id} className="rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{productDisplayName(line.product)}</p>
-                    <button onClick={() => removeLine(line.product.id)} className="text-xs text-red-500">
+                  <div className="flex items-center gap-3">
+                    {line.product.image_url ? (
+                      <img
+                        src={line.product.image_url}
+                        alt={productDisplayName(line.product)}
+                        className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                        <Package className="h-4 w-4" />
+                      </div>
+                    )}
+                    <p className="min-w-0 flex-1 truncate text-sm font-bold text-gray-900 dark:text-gray-100">{productDisplayName(line.product)}</p>
+                    <button onClick={() => removeLine(line.product.id)} className="shrink-0 text-xs text-red-500">
                       حذف
                     </button>
                   </div>
