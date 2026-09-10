@@ -20,6 +20,13 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // "Quick add variant" mode: adding a brand-new product directly into an
+  // existing group (via the "+ أضف طعم/حجم جديد" button). In this mode we
+  // skip asking for name/category/brand again — they're inherited from the
+  // group — and only ask for what actually differs per variant.
+  const isQuickVariant = !initial && !!presetGroupId;
+  const [presetGroupInfo, setPresetGroupInfo] = useState<ProductGroup | null>(null);
+
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
   const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -56,6 +63,30 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       .order("name")
       .then(({ data }) => setGroups((data ?? []) as ProductGroup[]));
   }, []);
+
+  // In quick-variant mode, fetch the group's shared identity (name,
+  // category, brand) and silently pre-fill the form with it, instead of
+  // making the user re-type product details that are already known.
+  useEffect(() => {
+    if (!isQuickVariant || !presetGroupId) return;
+    supabase
+      .from("product_groups")
+      .select("*")
+      .eq("id", presetGroupId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        const group = data as ProductGroup;
+        setPresetGroupInfo(group);
+        setForm((f) => ({
+          ...f,
+          name: group.name,
+          category_id: group.category_id ?? "",
+          brand: group.brand ?? "",
+        }));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isQuickVariant, presetGroupId]);
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -236,7 +267,17 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         )}
       </div>
 
-      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+      {isQuickVariant ? (
+        <div className="rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-500/10 p-3">
+          <p className="text-xs font-semibold text-brand-700 dark:text-brand-300">
+            بتضيف طعم/حجم جديد إلى: {presetGroupInfo?.name ?? "..."}
+          </p>
+          <p className="mt-1 text-[11px] text-brand-600 dark:text-brand-400">
+            الاسم والتصنيف والماركة بياخدهم تلقائيًا من المنتج الأساسي — أدخل بس اللي بيميّز هذا الطعم/الحجم تحت.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
         <span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
           هل هذا المنتج له أطعمة أو أحجام مختلفة؟
         </span>
@@ -300,32 +341,39 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             استخدم حقلي "النكهة" و"الحجم" تحت عشان تميّز هذا الطعم/الحجم عن باقي المجموعة.
           </p>
         )}
-      </div>
+        </div>
+      )}
 
-      <Field label="اسم المنتج *">
-        <input
-          value={form.name}
-          onChange={(e) => update("name", e.target.value)}
-          className="input"
-          placeholder="مثال: واي بروتين 2 كيلو"
-        />
-      </Field>
+      {!isQuickVariant && (
+        <Field label="اسم المنتج *">
+          <input
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            className="input"
+            placeholder="مثال: واي بروتين 2 كيلو"
+          />
+        </Field>
+      )}
 
-      <Field label="التصنيف">
-        <select value={form.category_id} onChange={(e) => update("category_id", e.target.value)} className="input">
-          <option value="">بدون تصنيف</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {!isQuickVariant && (
+        <Field label="التصنيف">
+          <select value={form.category_id} onChange={(e) => update("category_id", e.target.value)} className="input">
+            <option value="">بدون تصنيف</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="الماركة">
-          <input value={form.brand} onChange={(e) => update("brand", e.target.value)} className="input" />
-        </Field>
+        {!isQuickVariant && (
+          <Field label="الماركة">
+            <input value={form.brand} onChange={(e) => update("brand", e.target.value)} className="input" />
+          </Field>
+        )}
         <Field label="النكهة">
           <input value={form.flavor} onChange={(e) => update("flavor", e.target.value)} className="input" />
         </Field>
@@ -399,7 +447,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
 
       <button
         type="submit"
-        disabled={saving || uploadingImage}
+        disabled={saving || uploadingImage || (isQuickVariant && !presetGroupInfo)}
         className="w-full rounded-xl bg-brand-600 py-3.5 text-base font-bold text-white shadow-sm active:bg-brand-700 disabled:opacity-60"
       >
         {uploadingImage ? "جارِ رفع الصورة..." : saving ? "جارِ الحفظ..." : initial ? "حفظ التعديلات" : "إضافة المنتج"}
