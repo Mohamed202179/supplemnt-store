@@ -236,17 +236,32 @@ function ProductsPageContent() {
                         <div className="space-y-2 border-t border-gray-100 dark:border-gray-800 p-3">
                           {variants.map((p) => (
                             <div key={p.id} className="rounded-xl bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                  {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
-                                </p>
-                                <StockBadge status={getStockStatus(p)} />
-                              </div>
-                              <div className="mt-1 flex items-center justify-between text-sm">
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
-                                </span>
-                                <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                              <div className="flex items-start gap-3">
+                                {p.image_url ? (
+                                  <img
+                                    src={p.image_url}
+                                    alt={p.flavor ?? ""}
+                                    className="h-11 w-11 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-gray-900 text-gray-300 dark:text-gray-600">
+                                    <Package className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                      {p.flavor || "-"} {p.size ? `· ${p.size}` : ""}
+                                    </p>
+                                    <StockBadge status={getStockStatus(p)} />
+                                  </div>
+                                  <div className="mt-1 flex items-center justify-between text-sm">
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
+                                    </span>
+                                    <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                                  </div>
+                                </div>
                               </div>
                               <div className="mt-2 flex gap-2">
                                 <Link
