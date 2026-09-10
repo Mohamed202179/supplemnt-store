@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
 import OwnerGate from "@/components/OwnerGate";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, Package } from "lucide-react";
 
 type Step = "supplier" | "products" | "cart";
 
@@ -393,7 +393,18 @@ function NewPurchasePageContent() {
             {filteredProducts.map((p) => {
               const inCart = cart.find((l) => l.product.id === p.id);
               return (
-                <li key={p.id} className="flex items-center justify-between rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
+                <li key={p.id} className="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="h-11 w-11 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                      <Package className="h-5 w-5" />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -430,9 +441,20 @@ function NewPurchasePageContent() {
             <ul className="space-y-2">
               {cart.map((line) => (
                 <li key={line.product.id} className="rounded-xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{line.product.name}</p>
-                    <button onClick={() => removeLine(line.product.id)} className="text-xs text-red-500">
+                  <div className="flex items-center gap-3">
+                    {line.product.image_url ? (
+                      <img
+                        src={line.product.image_url}
+                        alt={line.product.name}
+                        className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 dark:border-gray-800 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+                        <Package className="h-4 w-4" />
+                      </div>
+                    )}
+                    <p className="min-w-0 flex-1 truncate text-sm font-bold text-gray-900 dark:text-gray-100">{line.product.name}</p>
+                    <button onClick={() => removeLine(line.product.id)} className="shrink-0 text-xs text-red-500">
                       حذف
                     </button>
                   </div>
