@@ -6,6 +6,7 @@ export type StockStatus = "available" | "low" | "out";
 export interface Category {
   id: string;
   name: string;
+  image_url: string | null;
   created_at: string;
 }
 
