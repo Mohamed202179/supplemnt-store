@@ -134,9 +134,17 @@ function ProductsPageContent() {
                 onClick={() => setViewCategoryId(c.id)}
                 className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
-                  <Tag className="h-5 w-5" />
-                </span>
+                {c.image_url ? (
+                  <img
+                    src={c.image_url}
+                    alt={c.name}
+                    className="h-10 w-10 rounded-xl border border-gray-100 dark:border-gray-700 object-cover"
+                  />
+                ) : (
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
+                    <Tag className="h-5 w-5" />
+                  </span>
+                )}
                 <span className="font-bold text-gray-900 dark:text-gray-100">{c.name}</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {categoryCounts.counts.get(c.id) ?? 0} منتج
