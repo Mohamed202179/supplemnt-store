@@ -7,7 +7,8 @@ import { formatEGP, getStockStatus, Product, Category, ProductGroup } from "@/li
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
 import OwnerGate from "@/components/OwnerGate";
-import { ChevronUp, ChevronDown, ChevronLeft, ShoppingBag, Package, Tag, FolderOpen } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ShoppingBag, Package, FolderOpen } from "lucide-react";
+import CategoryTile from "@/components/CategoryTile";
 
 const NO_CATEGORY = "__none__";
 
@@ -134,17 +135,7 @@ function ProductsPageContent() {
                 onClick={() => setViewCategoryId(c.id)}
                 className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
-                {c.image_url ? (
-                  <img
-                    src={c.image_url}
-                    alt={c.name}
-                    className="h-10 w-10 rounded-xl border border-gray-100 dark:border-gray-700 object-cover"
-                  />
-                ) : (
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
-                    <Tag className="h-5 w-5" />
-                  </span>
-                )}
+                <CategoryTile name={c.name} imageUrl={c.image_url} size="h-12 w-12" iconSize="h-6 w-6" />
                 <span className="font-bold text-gray-900 dark:text-gray-100">{c.name}</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {categoryCounts.counts.get(c.id) ?? 0} منتج
