@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase/client";
 import { Category } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
-import { Tag, Camera, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
+import CategoryTile from "@/components/CategoryTile";
 
 async function uploadCategoryImage(file: File): Promise<{ url: string | null; failed: boolean }> {
   const ext = file.name.split(".").pop();
@@ -246,13 +247,7 @@ function CategoriesPageContent() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    {c.image_url ? (
-                      <img src={c.image_url} alt={c.name} className="h-11 w-11 shrink-0 rounded-xl border border-gray-100 dark:border-gray-700 object-cover" />
-                    ) : (
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300">
-                        <Tag className="h-5 w-5" />
-                      </div>
-                    )}
+                    <CategoryTile name={c.name} imageUrl={c.image_url} size="h-11 w-11" />
                     <span className="flex-1 font-medium text-gray-900 dark:text-gray-100">{c.name}</span>
                     <button
                       onClick={() => startEdit(c)}
