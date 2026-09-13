@@ -105,7 +105,7 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
 
   return (
     <div>
-      <PageHeader title={`فاتورة شراء #${purchase.purchase_number}`} />
+      <PageHeader showBack title={`فاتورة شراء #${purchase.purchase_number}`} />
 
       <div className="space-y-4 p-4">
         {purchase.status === "cancelled" && (
