@@ -6,7 +6,7 @@ export default function NewProductPage({ searchParams }: { searchParams: { group
   return (
     <OwnerGate>
       <div>
-        <PageHeader title="إضافة منتج جديد" />
+        <PageHeader showBack title="إضافة منتج جديد" />
         <ProductForm presetGroupId={searchParams.group} />
       </div>
     </OwnerGate>
