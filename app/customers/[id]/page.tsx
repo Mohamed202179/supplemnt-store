@@ -84,7 +84,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
 
   return (
     <div>
-      <PageHeader title={customer.name} />
+      <PageHeader showBack title={customer.name} />
 
       <div className="space-y-4 p-4">
         <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
