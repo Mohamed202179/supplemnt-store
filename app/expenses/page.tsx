@@ -77,6 +77,7 @@ function ExpensesPageContent() {
   return (
     <div>
       <PageHeader
+        showBack
         title="المصروفات"
         action={
           <button
