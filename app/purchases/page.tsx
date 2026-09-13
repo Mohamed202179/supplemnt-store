@@ -37,6 +37,7 @@ function PurchasesPageContent() {
   return (
     <div>
       <PageHeader
+        showBack
         title="المشتريات"
         action={
           <Link href="/purchases/new" className="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-bold text-white">
