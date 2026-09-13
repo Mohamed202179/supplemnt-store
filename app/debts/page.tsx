@@ -30,7 +30,7 @@ export default function DebtsPage() {
 
   return (
     <div>
-      <PageHeader title="المديونيات" />
+      <PageHeader showBack title="المديونيات" />
 
       <div className="space-y-3 p-4">
         <div className="rounded-2xl bg-red-50 p-4">
