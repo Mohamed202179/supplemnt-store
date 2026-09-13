@@ -94,7 +94,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div>
-      <PageHeader title={`فاتورة #${sale.invoice_number}`} />
+      <PageHeader showBack title={`فاتورة #${sale.invoice_number}`} />
 
       <div className="space-y-4 p-4">
         {sale.status === "cancelled" && (
