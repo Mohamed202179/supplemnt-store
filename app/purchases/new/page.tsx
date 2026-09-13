@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
 import OwnerGate from "@/components/OwnerGate";
-import { PackageSearch, Package } from "lucide-react";
+import { PackageSearch, Package, ChevronRight } from "lucide-react";
 
 type Step = "supplier" | "products" | "cart";
 
@@ -243,7 +243,16 @@ function NewPurchasePageContent() {
   return (
     <div>
       <div className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">شراء جديد</h1>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => router.back()}
+            className="-mr-1 shrink-0 rounded-lg p-1.5 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+            aria-label="رجوع"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">شراء جديد</h1>
+        </div>
         <div className="mt-2 flex gap-2 text-xs font-semibold">
           <StepPill active={step === "supplier"} done={!!selectedSupplier || noSupplier} onClick={() => setStep("supplier")}>
             1. المورد
