@@ -127,7 +127,7 @@ function ReportsPageContent() {
 
   return (
     <div>
-      <PageHeader title="التقارير" />
+      <PageHeader showBack title="التقارير" />
 
       <div className="space-y-4 p-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
