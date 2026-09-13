@@ -122,6 +122,7 @@ function SuppliersPageContent() {
   return (
     <div>
       <PageHeader
+        showBack
         title="الموردين"
         action={
           <button
