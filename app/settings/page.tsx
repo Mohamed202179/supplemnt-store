@@ -144,7 +144,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title={t("settings_title")} />
+      <PageHeader showBack title={t("settings_title")} />
 
       <div className="space-y-4 p-4">
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
