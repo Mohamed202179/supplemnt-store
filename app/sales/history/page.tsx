@@ -43,7 +43,7 @@ export default function SalesHistoryPage() {
 
   return (
     <div>
-      <PageHeader title="سجل المبيعات" />
+      <PageHeader showBack title="سجل المبيعات" />
 
       <div className="space-y-3 p-4">
         <input
