@@ -167,7 +167,7 @@ function CategoriesPageContent() {
 
   return (
     <div>
-      <PageHeader title="التصنيفات" />
+      <PageHeader showBack title="التصنيفات" />
 
       <div className="space-y-3 p-4">
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
