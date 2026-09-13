@@ -112,6 +112,7 @@ function ProductsPageContent() {
   return (
     <div>
       <PageHeader
+        showBack
         title={viewCategoryId === null ? "المنتجات" : currentCategoryName}
         action={
           <Link
@@ -133,9 +134,9 @@ function ProductsPageContent() {
               <button
                 key={c.id}
                 onClick={() => setViewCategoryId(c.id)}
-                className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+                className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
-                <CategoryTile name={c.name} imageUrl={c.image_url} size="h-12 w-12" iconSize="h-6 w-6" />
+                <CategoryTile name={c.name} imageUrl={c.image_url} size="h-20 w-20" iconSize="h-14 w-14" />
                 <span className="font-bold text-gray-900 dark:text-gray-100">{c.name}</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {categoryCounts.counts.get(c.id) ?? 0} منتج
@@ -146,10 +147,10 @@ function ProductsPageContent() {
             {categoryCounts.uncategorized > 0 && (
               <button
                 onClick={() => setViewCategoryId(NO_CATEGORY)}
-                className="flex flex-col items-start gap-2 rounded-2xl bg-white p-4 text-right shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+                className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                  <FolderOpen className="h-5 w-5" />
+                <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                  <FolderOpen className="h-14 w-14" />
                 </span>
                 <span className="font-bold text-gray-900 dark:text-gray-100">بدون تصنيف</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
