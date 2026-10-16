@@ -190,7 +190,7 @@ export default function DashboardPage() {
   return (
     <div className="min-w-0">
       <div
-        className="relative overflow-hidden px-3 pb-6 pt-3 text-white sm:px-4 sm:pb-8 sm:pt-4 md:mx-4 md:mt-4 md:rounded-2xl"
+        className="relative overflow-hidden px-3 pb-2 pt-2 text-white sm:px-4 sm:pb-5 sm:pt-3 md:mx-4 md:mt-4 md:rounded-2xl"
         style={{
           backgroundImage: headerImageUrl
             ? `linear-gradient(to bottom, rgba(10,10,20,0.55), rgba(20,15,50,0.88)), url('${headerImageUrl}')`
@@ -239,7 +239,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <p className="mt-4 text-sm opacity-90 sm:mt-5">
+        <p className="mt-2 text-sm opacity-90 sm:mt-3">
           {t("dashboard_welcome")} 👋
         </p>
         <h1 className="break-words text-lg font-bold sm:text-xl">
@@ -247,7 +247,7 @@ export default function DashboardPage() {
         </h1>
       </div>
 
-      <div className="-mt-3 min-w-0 space-y-3 px-3 sm:-mt-4 sm:space-y-4 sm:px-4 md:mt-4">
+      <div className="mt-2 min-w-0 space-y-2 px-3 sm:mt-3 sm:space-y-3 sm:px-4 md:mt-4">
         {loading || !data ? (
           <div className="rounded-2xl bg-white p-5 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500 sm:p-6">
             {t("loading")}
