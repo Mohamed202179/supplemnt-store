@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -48,7 +49,9 @@ export default function DashboardPage() {
       .select("header_image_url")
       .eq("id", 1)
       .single()
-      .then(({ data }) => setHeaderImageUrl((data as any)?.header_image_url ?? null));
+      .then(({ data }) =>
+        setHeaderImageUrl((data as any)?.header_image_url ?? null)
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
@@ -57,7 +60,11 @@ export default function DashboardPage() {
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    const startOfMonth = new Date(startOfDay.getFullYear(), startOfDay.getMonth(), 1);
+    const startOfMonth = new Date(
+      startOfDay.getFullYear(),
+      startOfDay.getMonth(),
+      1
+    );
     const sevenDaysAgo = new Date(startOfDay);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -87,7 +94,10 @@ export default function DashboardPage() {
         .select("profit")
         .eq("status", "completed")
         .gte("created_at", startOfMonth.toISOString()),
-      supabase.from("expenses").select("amount").gte("expense_date", startOfMonth.toISOString().slice(0, 10)),
+      supabase
+        .from("expenses")
+        .select("amount")
+        .gte("expense_date", startOfMonth.toISOString().slice(0, 10)),
       supabase
         .from("sales")
         .select("total, profit, created_at")
@@ -95,35 +105,66 @@ export default function DashboardPage() {
         .gte("created_at", sevenDaysAgo.toISOString()),
     ]);
 
-    const todaySales = (todaySalesData ?? []).reduce((sum, s: any) => sum + Number(s.total), 0);
+    const todaySales = (todaySalesData ?? []).reduce(
+      (sum, s: any) => sum + Number(s.total),
+      0
+    );
     const todayInvoices = (todaySalesData ?? []).length;
     const allProducts = (products ?? []) as Product[];
     const inventoryValue = allProducts.reduce(
       (sum, p) => sum + Number(p.purchase_price) * Number(p.current_stock),
       0
     );
-    const totalDebts = (customers ?? []).reduce((sum, c: any) => sum + Number(c.current_debt), 0);
-    const lowStockProducts = allProducts.filter((p) => p.current_stock <= p.min_stock);
+    const totalDebts = (customers ?? []).reduce(
+      (sum, c: any) => sum + Number(c.current_debt),
+      0
+    );
+    const lowStockProducts = allProducts.filter(
+      (p) => p.current_stock <= p.min_stock
+    );
 
     const ninetyDaysFromNow = new Date();
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     const expiringProducts = allProducts
-      .filter((p) => p.expiry_date && new Date(p.expiry_date) <= ninetyDaysFromNow)
-      .sort((a, b) => new Date(a.expiry_date!).getTime() - new Date(b.expiry_date!).getTime());
+      .filter(
+        (p) => p.expiry_date && new Date(p.expiry_date) <= ninetyDaysFromNow
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.expiry_date!).getTime() -
+          new Date(b.expiry_date!).getTime()
+      );
 
-    const monthGrossProfit = (monthSales ?? []).reduce((sum, s: any) => sum + Number(s.profit), 0);
-    const monthExpenses = (monthExpensesData ?? []).reduce((sum, e: any) => sum + Number(e.amount), 0);
+    const monthGrossProfit = (monthSales ?? []).reduce(
+      (sum, s: any) => sum + Number(s.profit),
+      0
+    );
+    const monthExpenses = (monthExpensesData ?? []).reduce(
+      (sum, e: any) => sum + Number(e.amount),
+      0
+    );
 
     const weekSeries: DayPoint[] = [];
     for (let i = 6; i >= 0; i--) {
       const day = new Date(startOfDay);
       day.setDate(day.getDate() - i);
       const key = day.toDateString();
-      const dayRows = (weekSales ?? []).filter((s: any) => new Date(s.created_at).toDateString() === key);
+      const dayRows = (weekSales ?? []).filter(
+        (s: any) => new Date(s.created_at).toDateString() === key
+      );
       weekSeries.push({
-        label: day.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { weekday: "short" }),
-        sales: dayRows.reduce((sum: number, s: any) => sum + Number(s.total), 0),
-        profit: dayRows.reduce((sum: number, s: any) => sum + Number(s.profit), 0),
+        label: day.toLocaleDateString(
+          lang === "ar" ? "ar-EG" : "en-US",
+          { weekday: "short" }
+        ),
+        sales: dayRows.reduce(
+          (sum: number, s: any) => sum + Number(s.total),
+          0
+        ),
+        profit: dayRows.reduce(
+          (sum: number, s: any) => sum + Number(s.profit),
+          0
+        ),
       });
     }
 
@@ -142,12 +183,14 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
-  const alertCount = data ? data.lowStockProducts.length + data.expiringProducts.length : 0;
+  const alertCount = data
+    ? data.lowStockProducts.length + data.expiringProducts.length
+    : 0;
 
   return (
-    <div>
+    <div className="min-w-0">
       <div
-        className="relative overflow-hidden px-4 pb-8 pt-4 text-white md:mx-4 md:mt-4 md:rounded-2xl"
+        className="relative overflow-hidden px-3 pb-6 pt-3 text-white sm:px-4 sm:pb-8 sm:pt-4 md:mx-4 md:mt-4 md:rounded-2xl"
         style={{
           backgroundImage: headerImageUrl
             ? `linear-gradient(to bottom, rgba(10,10,20,0.55), rgba(20,15,50,0.88)), url('${headerImageUrl}')`
@@ -156,70 +199,99 @@ export default function DashboardPage() {
           backgroundPosition: "center",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/icons/icon-192.png" alt="Daily Dose" className="h-9 w-9 rounded-xl object-cover" />
-            <div>
-              <p className="text-sm font-bold leading-tight">Daily Dose</p>
-              <p className="text-[10px] leading-tight opacity-70">Supplements</p>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <img
+              src="/icons/icon-192.png"
+              alt="Daily Dose"
+              className="h-8 w-8 shrink-0 rounded-xl object-cover sm:h-9 sm:w-9"
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-tight">
+                Daily Dose
+              </p>
+              <p className="text-[10px] leading-tight opacity-70">
+                Supplements
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/inventory" className="relative">
+
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/inventory"
+              aria-label={t("stat_inventory_value")}
+              className="relative flex h-9 w-8 items-center justify-center"
+            >
               <Bell className="h-5 w-5" />
               {alertCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                   {alertCount}
                 </span>
               )}
             </Link>
-            <Link href="/more">
+            <Link
+              href="/more"
+              aria-label="Menu"
+              className="flex h-9 w-8 items-center justify-center"
+            >
               <Menu className="h-5 w-5" />
             </Link>
           </div>
         </div>
 
-        <p className="mt-5 text-sm opacity-90">{t("dashboard_welcome")} 👋</p>
-        <h1 className="text-xl font-bold">Daily Dose Supplements</h1>
+        <p className="mt-4 text-sm opacity-90 sm:mt-5">
+          {t("dashboard_welcome")} 👋
+        </p>
+        <h1 className="break-words text-lg font-bold sm:text-xl">
+          Daily Dose Supplements
+        </h1>
       </div>
 
-      <div className="-mt-4 space-y-4 px-4 md:mt-4">
+      <div className="-mt-3 min-w-0 space-y-3 px-3 sm:-mt-4 sm:space-y-4 sm:px-4 md:mt-4">
         {loading || !data ? (
-          <div className="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500">
+          <div className="rounded-2xl bg-white p-5 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500 sm:p-6">
             {t("loading")}
           </div>
         ) : (
           <>
-            {isOwner && (data.lowStockProducts.length > 0 || data.expiringProducts.length > 0) && (
-              <div className="grid grid-cols-2 gap-3">
-                {data.lowStockProducts.length > 0 && (
-                  <Link
-                    href="/inventory"
-                    className="rounded-2xl bg-amber-50 p-3 shadow-sm dark:bg-amber-500/10"
-                  >
-                    <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    <p className="mt-2 text-xl font-bold text-amber-700 dark:text-amber-300">
-                      {data.lowStockProducts.length}
-                    </p>
-                    <p className="text-xs font-medium text-amber-700 dark:text-amber-400">{t("stat_low_stock")}</p>
-                  </Link>
-                )}
-                {data.expiringProducts.length > 0 && (
-                  <Link href="/inventory" className="rounded-2xl bg-red-50 p-3 shadow-sm dark:bg-red-500/10">
-                    <CalendarClock className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    <p className="mt-2 text-xl font-bold text-red-700 dark:text-red-300">
-                      {data.expiringProducts.length}
-                    </p>
-                    <p className="text-xs font-medium text-red-700 dark:text-red-400">
-                      {t("section_expiring_products")}
-                    </p>
-                  </Link>
-                )}
-              </div>
-            )}
+            {isOwner &&
+              (data.lowStockProducts.length > 0 ||
+                data.expiringProducts.length > 0) && (
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
+                  {data.lowStockProducts.length > 0 && (
+                    <Link
+                      href="/inventory"
+                      className="min-w-0 rounded-2xl bg-amber-50 p-3 shadow-sm dark:bg-amber-500/10 sm:p-4"
+                    >
+                      <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      <p className="mt-2 break-words text-lg font-bold text-amber-700 dark:text-amber-300 sm:text-xl">
+                        {data.lowStockProducts.length}
+                      </p>
+                      <p className="break-words text-xs font-medium text-amber-700 dark:text-amber-400">
+                        {t("stat_low_stock")}
+                      </p>
+                    </Link>
+                  )}
+
+                  {data.expiringProducts.length > 0 && (
+                    <Link
+                      href="/inventory"
+                      className="min-w-0 rounded-2xl bg-red-50 p-3 shadow-sm dark:bg-red-500/10 sm:p-4"
+                    >
+                      <CalendarClock className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <p className="mt-2 break-words text-lg font-bold text-red-700 dark:text-red-300 sm:text-xl">
+                        {data.expiringProducts.length}
+                      </p>
+                      <p className="break-words text-xs font-medium text-red-700 dark:text-red-400">
+                        {t("section_expiring_products")}
+                      </p>
+                    </Link>
+                  )}
+                </div>
+              )}
 
             {isOwner && (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
                 <IconStatCard
                   href="/sales/history"
                   icon={<TrendingUp className="h-5 w-5" />}
@@ -248,7 +320,11 @@ export default function DashboardPage() {
                   iconClass="bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-300"
                   label={t("stat_month_profit")}
                   value={formatEGP(data.monthProfit, lang)}
-                  valueClass={data.monthProfit < 0 ? "text-red-600 dark:text-red-400" : undefined}
+                  valueClass={
+                    data.monthProfit < 0
+                      ? "text-red-600 dark:text-red-400"
+                      : undefined
+                  }
                 />
                 <IconStatCard
                   href="/expenses"
@@ -261,69 +337,102 @@ export default function DashboardPage() {
             )}
 
             {isOwner && (
-              <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-                <div className="mb-1 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">المبيعات والأرباح</h2>
-                  <div className="flex items-center gap-3 text-[11px]">
+              <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                    المبيعات والأرباح
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                     <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <span className="h-2 w-2 rounded-full bg-brand-600" /> المبيعات
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                      المبيعات
                     </span>
                     <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <span className="h-2 w-2 rounded-full bg-amber-500" /> الأرباح
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                      الأرباح
                     </span>
                   </div>
                 </div>
-                <SalesChart data={data.weekSeries} />
+                <div className="min-w-0">
+                  <SalesChart data={data.weekSeries} />
+                </div>
               </section>
             )}
 
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
               <Link
                 href="/sales"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-4 text-center text-base font-bold text-white shadow-sm active:bg-brand-700"
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-3 py-3 text-center text-sm font-bold text-white shadow-sm active:bg-brand-700 sm:py-4 sm:text-base"
               >
-                <ShoppingCart className="h-5 w-5" />
-                {t("btn_new_sale")}
+                <ShoppingCart className="h-5 w-5 shrink-0" />
+                <span className="break-words">
+                  {t("btn_new_sale")}
+                </span>
               </Link>
+
               {isOwner && (
                 <Link
                   href="/purchases/new"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800"
+                  className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white px-3 py-3 text-center text-sm font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800 sm:py-4 sm:text-base"
                 >
-                  <PackagePlus className="h-5 w-5" />
-                  {t("btn_new_purchase")}
+                  <PackagePlus className="h-5 w-5 shrink-0" />
+                  <span className="break-words">
+                    {t("btn_new_purchase")}
+                  </span>
                 </Link>
               )}
             </div>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-              <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">{t("section_recent_sales")}</h2>
+            <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
+              <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">
+                {t("section_recent_sales")}
+              </h2>
+
               {data.recentSales.length === 0 ? (
-                <p className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">{t("no_sales_yet")}</p>
+                <p className="py-4 text-center text-sm text-gray-400 dark:text-gray-500">
+                  {t("no_sales_yet")}
+                </p>
               ) : (
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                   {data.recentSales.map((s) => (
                     <li key={s.id}>
-                      <Link href={`/sales/${s.id}`} className="flex items-center gap-3 py-2 text-sm">
+                      <Link
+                        href={`/sales/${s.id}`}
+                        className="flex min-w-0 items-center gap-2 py-3 text-sm sm:gap-3"
+                      >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
                           <Receipt className="h-4 w-4" />
                         </span>
+
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium text-gray-800 dark:text-gray-200">
-                            {s.customers?.name || s.customer_name_snapshot || t("cash_customer")}{" "}
+                            {s.customers?.name ||
+                              s.customer_name_snapshot ||
+                              t("cash_customer")}{" "}
                             {s.status === "cancelled" && (
-                              <span className="text-xs text-red-500">{t("cancelled_label")}</span>
+                              <span className="text-xs text-red-500">
+                                {t("cancelled_label")}
+                              </span>
                             )}
                           </p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(s.created_at)}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            {formatDate(s.created_at)}
+                          </p>
                         </div>
-                        <span className="font-bold text-gray-900 dark:text-gray-100">{formatEGP(s.total, lang)}</span>
+
+                        <span className="shrink-0 text-right text-xs font-bold text-gray-900 dark:text-gray-100 sm:text-sm">
+                          {formatEGP(s.total, lang)}
+                        </span>
                       </Link>
                     </li>
                   ))}
                 </ul>
               )}
-              <Link href="/sales/history" className="mt-2 block text-center text-xs font-semibold text-brand-600">
+
+              <Link
+                href="/sales/history"
+                className="mt-2 block py-2 text-center text-xs font-semibold text-brand-600"
+              >
                 {t("view_all_sales")}
               </Link>
             </section>
@@ -352,11 +461,31 @@ function IconStatCard({
   valueClass?: string;
 }) {
   return (
-    <Link href={href} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}>{icon}</span>
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`mt-0.5 text-base font-bold text-gray-900 dark:text-gray-100 ${valueClass ?? ""}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">{sub}</p>}
+    <Link
+      href={href}
+      className="block min-w-0 rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800 sm:p-4"
+    >
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-xl sm:h-9 sm:w-9 ${iconClass}`}
+      >
+        {icon}
+      </span>
+
+      <p className="mt-2 break-words text-xs text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+
+      <p
+        className={`mt-0.5 break-words text-sm font-bold text-gray-900 dark:text-gray-100 sm:text-base ${valueClass ?? ""}`}
+      >
+        {value}
+      </p>
+
+      {sub && (
+        <p className="mt-0.5 break-words text-[11px] text-gray-400 dark:text-gray-500">
+          {sub}
+        </p>
+      )}
     </Link>
   );
 }
