@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -6,14 +7,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand palette sampled directly from the Daily Dose logo
-        // (deep navy/indigo gradient, white mark).
+        // Mr Supplement — Premium Black & White Brand
         brand: {
-          50: "#eef0fb",
-          100: "#dbdff7",
-          500: "#4641d2",
-          600: "#302cb7",
-          700: "#24219c",
+          50: "#F5F5F5",
+          100: "#E5E5E5",
+          500: "#525252",
+          600: "#171717",
+          700: "#0A0A0A",
         },
       },
       fontFamily: {
@@ -23,4 +23,5 @@ const config: Config = {
   },
   plugins: [],
 };
+
 export default config;
