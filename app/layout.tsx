@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AuthGate from "@/components/AuthGate";
@@ -6,11 +7,11 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { RoleProvider } from "@/components/RoleProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-const appName = process.env.APP_NAME || "Daily Dose Supplements";
-const appShortName = process.env.APP_SHORT_NAME || "Daily Dose";
+const appName = process.env.APP_NAME || "Mr Supplement";
+const appShortName = process.env.APP_SHORT_NAME || "Mr Supplement";
 const appDescription =
-  process.env.APP_DESCRIPTION || "نظام إدارة متجر Daily Dose Supplements";
-const appThemeColor = process.env.APP_THEME_COLOR || "#302cb7";
+  process.env.APP_DESCRIPTION || "نظام إدارة متجر Mr Supplement";
+const appThemeColor = process.env.APP_THEME_COLOR || "#171717";
 
 const icon192 = process.env.APP_ICON_192_URL || "/icons/icon-192.png";
 const icon512 = process.env.APP_ICON_512_URL || "/icons/icon-512.png";
