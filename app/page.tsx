@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -217,9 +218,9 @@ export default function DashboardPage() {
     : 0;
 
   return (
-    <div>
+    <div className="min-w-0">
       <div
-        className="relative overflow-hidden px-4 pb-8 pt-4 text-white md:mx-4 md:mt-4 md:rounded-2xl"
+        className="relative overflow-hidden px-3 pb-2 pt-2 text-white sm:px-4 sm:pb-5 sm:pt-3 md:mx-4 md:mt-4 md:rounded-2xl"
         style={{
           backgroundImage: headerImageUrl
             ? `linear-gradient(to bottom, rgba(15,15,15,0.45), rgba(15,15,15,0.88)), url('${headerImageUrl}')`
@@ -228,16 +229,16 @@ export default function DashboardPage() {
           backgroundPosition: "center",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <img
               src="/icons/icon-192.png"
               alt="Mr Supplement"
-              className="h-9 w-9 rounded-xl object-cover"
+              className="h-8 w-8 shrink-0 rounded-xl object-cover sm:h-9 sm:w-9"
             />
 
-            <div>
-              <p className="text-sm font-bold leading-tight">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-tight">
                 Mr Supplement
               </p>
 
@@ -247,33 +248,43 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link href="/inventory" className="relative">
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/inventory"
+              aria-label={t("stat_inventory_value")}
+              className="relative flex h-9 w-8 items-center justify-center"
+            >
               <Bell className="h-5 w-5" />
 
               {alertCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                   {alertCount}
                 </span>
               )}
             </Link>
 
-            <Link href="/more">
+            <Link
+              href="/more"
+              aria-label="Menu"
+              className="flex h-9 w-8 items-center justify-center"
+            >
               <Menu className="h-5 w-5" />
             </Link>
           </div>
         </div>
 
-        <p className="mt-5 text-sm opacity-90">
+        <p className="mt-2 text-sm opacity-90 sm:mt-3">
           {t("dashboard_welcome")} 👋
         </p>
 
-        <h1 className="text-xl font-bold">Mr Supplement</h1>
+        <h1 className="break-words text-lg font-bold sm:text-xl">
+          Mr Supplement
+        </h1>
       </div>
 
-      <div className="-mt-4 space-y-4 px-4 md:mt-4">
+      <div className="mt-2 min-w-0 space-y-2 px-3 sm:mt-3 sm:space-y-3 sm:px-4 md:mt-4">
         {loading || !data ? (
-          <div className="rounded-2xl bg-white p-6 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500">
+          <div className="rounded-2xl bg-white p-5 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500 sm:p-6">
             {t("loading")}
           </div>
         ) : (
@@ -281,19 +292,19 @@ export default function DashboardPage() {
             {isOwner &&
               (data.lowStockProducts.length > 0 ||
                 data.expiringProducts.length > 0) && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
                   {data.lowStockProducts.length > 0 && (
                     <Link
                       href="/inventory"
-                      className="rounded-2xl bg-amber-50 p-3 shadow-sm dark:bg-amber-500/10"
+                      className="min-w-0 rounded-2xl bg-amber-50 p-3 shadow-sm dark:bg-amber-500/10 sm:p-4"
                     >
                       <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
 
-                      <p className="mt-2 text-xl font-bold text-amber-700 dark:text-amber-300">
+                      <p className="mt-2 break-words text-lg font-bold text-amber-700 dark:text-amber-300 sm:text-xl">
                         {data.lowStockProducts.length}
                       </p>
 
-                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                      <p className="break-words text-xs font-medium text-amber-700 dark:text-amber-400">
                         {t("stat_low_stock")}
                       </p>
                     </Link>
@@ -302,15 +313,15 @@ export default function DashboardPage() {
                   {data.expiringProducts.length > 0 && (
                     <Link
                       href="/inventory"
-                      className="rounded-2xl bg-red-50 p-3 shadow-sm dark:bg-red-500/10"
+                      className="min-w-0 rounded-2xl bg-red-50 p-3 shadow-sm dark:bg-red-500/10 sm:p-4"
                     >
                       <CalendarClock className="h-5 w-5 text-red-600 dark:text-red-400" />
 
-                      <p className="mt-2 text-xl font-bold text-red-700 dark:text-red-300">
+                      <p className="mt-2 break-words text-lg font-bold text-red-700 dark:text-red-300 sm:text-xl">
                         {data.expiringProducts.length}
                       </p>
 
-                      <p className="text-xs font-medium text-red-700 dark:text-red-400">
+                      <p className="break-words text-xs font-medium text-red-700 dark:text-red-400">
                         {t("section_expiring_products")}
                       </p>
                     </Link>
@@ -319,7 +330,7 @@ export default function DashboardPage() {
               )}
 
             {isOwner && (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
                 <IconStatCard
                   href="/sales/history"
                   icon={<TrendingUp className="h-5 w-5" />}
@@ -369,50 +380,56 @@ export default function DashboardPage() {
             )}
 
             {isOwner && (
-              <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-                <div className="mb-1 flex items-center justify-between">
+              <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">
                     المبيعات والأرباح
                   </h2>
 
-                  <div className="flex items-center gap-3 text-[11px]">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                     <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <span className="h-2 w-2 rounded-full bg-brand-600" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
                       المبيعات
                     </span>
 
                     <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
                       الأرباح
                     </span>
                   </div>
                 </div>
 
-                <SalesChart data={data.weekSeries} />
+                <div className="min-w-0">
+                  <SalesChart data={data.weekSeries} />
+                </div>
               </section>
             )}
 
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
               <Link
                 href="/sales"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-4 text-center text-base font-bold text-white shadow-sm active:bg-brand-700"
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-3 py-3 text-center text-sm font-bold text-white shadow-sm active:bg-brand-700 sm:py-4 sm:text-base"
               >
-                <ShoppingCart className="h-5 w-5" />
-                {t("btn_new_sale")}
+                <ShoppingCart className="h-5 w-5 shrink-0" />
+                <span className="break-words">
+                  {t("btn_new_sale")}
+                </span>
               </Link>
 
               {isOwner && (
                 <Link
                   href="/purchases/new"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white py-4 text-center text-base font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800"
+                  className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white px-3 py-3 text-center text-sm font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800 sm:py-4 sm:text-base"
                 >
-                  <PackagePlus className="h-5 w-5" />
-                  {t("btn_new_purchase")}
+                  <PackagePlus className="h-5 w-5 shrink-0" />
+                  <span className="break-words">
+                    {t("btn_new_purchase")}
+                  </span>
                 </Link>
               )}
             </div>
 
-            <section className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+            <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
               <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">
                 {t("section_recent_sales")}
               </h2>
@@ -427,7 +444,7 @@ export default function DashboardPage() {
                     <li key={s.id}>
                       <Link
                         href={`/sales/${s.id}`}
-                        className="flex items-center gap-3 py-2 text-sm"
+                        className="flex min-w-0 items-center gap-2 py-3 text-sm sm:gap-3"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
                           <Receipt className="h-4 w-4" />
@@ -450,7 +467,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
 
-                        <span className="font-bold text-gray-900 dark:text-gray-100">
+                        <span className="shrink-0 text-right text-xs font-bold text-gray-900 dark:text-gray-100 sm:text-sm">
                           {formatEGP(s.total, lang)}
                         </span>
                       </Link>
@@ -461,7 +478,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/sales/history"
-                className="mt-2 block text-center text-xs font-semibold text-brand-600"
+                className="mt-2 block py-2 text-center text-xs font-semibold text-brand-600"
               >
                 {t("view_all_sales")}
               </Link>
@@ -493,26 +510,26 @@ function IconStatCard({
   return (
     <Link
       href={href}
-      className="block rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+      className="block min-w-0 rounded-2xl bg-white p-3 shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800 sm:p-4"
     >
       <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}
+        className={`flex h-8 w-8 items-center justify-center rounded-xl sm:h-9 sm:w-9 ${iconClass}`}
       >
         {icon}
       </span>
 
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-2 break-words text-xs text-gray-500 dark:text-gray-400">
         {label}
       </p>
 
       <p
-        className={`mt-0.5 text-base font-bold text-gray-900 dark:text-gray-100 ${valueClass ?? ""}`}
+        className={`mt-0.5 break-words text-sm font-bold text-gray-900 dark:text-gray-100 sm:text-base ${valueClass ?? ""}`}
       >
         {value}
       </p>
 
       {sub && (
-        <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+        <p className="mt-0.5 break-words text-[11px] text-gray-400 dark:text-gray-500">
           {sub}
         </p>
       )}
