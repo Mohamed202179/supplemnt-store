@@ -173,7 +173,7 @@ function ProductsPageContent() {
                 setViewCategoryId(null);
                 setSearch("");
               }}
-              className="flex items-center gap-1 text-xs font-semibold text-brand-600"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300"
             >
               <ChevronLeft className="h-4 w-4 rotate-180" />
               كل التصنيفات
@@ -223,7 +223,7 @@ function ProductsPageContent() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">{group.categories?.name || "بدون تصنيف"}</p>
-                          <p className="mt-1 text-xs font-semibold text-brand-600">
+                          <p className="mt-1 text-xs font-semibold text-brand-600 dark:text-brand-300">
                             {variants.length} طعم/حجم · إجمالي الكمية {totalStock}
                           </p>
                         </div>
@@ -259,7 +259,7 @@ function ProductsPageContent() {
                                     <span className="text-gray-500 dark:text-gray-400">
                                       الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
                                     </span>
-                                    <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                                    <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.selling_price)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -317,7 +317,7 @@ function ProductsPageContent() {
                       <span className="text-gray-500 dark:text-gray-400">
                         الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
                       </span>
-                      <span className="font-bold text-brand-700">{formatEGP(p.selling_price)}</span>
+                      <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.selling_price)}</span>
                     </div>
                     <div className="mt-2 flex gap-2">
                       <Link
