@@ -158,7 +158,7 @@ export default function ProductStockPage({ params }: { params: { id: string } })
                 <li key={m.id} className="py-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-gray-800 dark:text-gray-200">{MOVEMENT_TYPE_LABELS[m.type]}</span>
-                    <span className={`font-bold ${m.quantity >= 0 ? "text-brand-700" : "text-red-600"}`}>
+                    <span className={`font-bold ${m.quantity >= 0 ? "text-brand-700 dark:text-brand-300" : "text-red-600"}`}>
                       {m.quantity >= 0 ? "+" : ""}
                       {m.quantity}
                     </span>
