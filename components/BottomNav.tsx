@@ -38,7 +38,7 @@ export default function BottomNav() {
               <Link
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-medium ${
-                  active ? "text-brand-600" : "text-gray-400 dark:text-gray-500"
+                  active ? "text-brand-600 dark:text-brand-300" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
