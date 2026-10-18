@@ -210,7 +210,7 @@ export default function InventoryPage() {
                         <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                           إجمالي الكمية: <b className="text-gray-800 dark:text-gray-200">{totalStock}</b>
                         </span>
-                        <span className="font-bold text-brand-700">{formatEGP(groupValue)}</span>
+                        <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(groupValue)}</span>
                       </div>
                     </div>
                     <span className="shrink-0 text-gray-300 dark:text-gray-600">
@@ -255,7 +255,7 @@ export default function InventoryPage() {
                             </div>
                             <div className="rounded-lg bg-white dark:bg-gray-900 py-1.5">
                               <p className="text-gray-400 dark:text-gray-500">الإجمالي (تكلفة)</p>
-                              <p className="mt-0.5 font-bold text-brand-700">
+                              <p className="mt-0.5 font-bold text-brand-700 dark:text-brand-300">
                                 {formatEGP(p.current_stock * p.purchase_price)}
                               </p>
                             </div>
@@ -309,7 +309,7 @@ export default function InventoryPage() {
                   </div>
                   <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
                     <p className="text-gray-400 dark:text-gray-500">الإجمالي (سعر الشراء)</p>
-                    <p className="mt-0.5 font-bold text-brand-700">{formatEGP(p.current_stock * p.purchase_price)}</p>
+                    <p className="mt-0.5 font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.current_stock * p.purchase_price)}</p>
                   </div>
                 </div>
               </Link>
