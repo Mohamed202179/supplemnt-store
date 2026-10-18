@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useTheme } from "@/components/ThemeProvider";
 
 export interface DayPoint {
   label: string;
@@ -9,6 +10,11 @@ export interface DayPoint {
 }
 
 export default function SalesChart({ data }: { data: DayPoint[] }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const tooltipBg = isDark ? "#1f2937" : "#ffffff";
+  const tooltipText = isDark ? "#f3f4f6" : "#111827";
+
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -34,7 +40,10 @@ export default function SalesChart({ data }: { data: DayPoint[] }) {
               border: "none",
               fontSize: 12,
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              backgroundColor: tooltipBg,
+              color: tooltipText,
             }}
+            labelStyle={{ color: tooltipText }}
           />
           <Bar dataKey="sales" fill="#302cb7" radius={[6, 6, 0, 0]} maxBarSize={18} name="المبيعات" />
           <Bar dataKey="profit" fill="#f59e0b" radius={[6, 6, 0, 0]} maxBarSize={18} name="الأرباح" />
