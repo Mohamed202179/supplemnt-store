@@ -294,7 +294,7 @@ export default function CustomersPage() {
                         </div>
                         <div className="text-left">
                           <p className="text-xs text-gray-400 dark:text-gray-500">الرصيد المستحق</p>
-                          <p className={`font-bold ${c.current_debt > 0 ? "text-red-600" : "text-brand-700"}`}>
+                          <p className={`font-bold ${c.current_debt > 0 ? "text-red-600" : "text-brand-700 dark:text-brand-300"}`}>
                             {formatEGP(c.current_debt)}
                           </p>
                         </div>
