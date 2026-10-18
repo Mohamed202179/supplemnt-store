@@ -297,7 +297,7 @@ function NewPurchasePageContent() {
                     setStep("products");
                   }}
                   className={`w-full rounded-xl border p-3 text-right text-sm ${
-                    selectedSupplier?.id === s.id ? "border-brand-500 bg-brand-50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                    selectedSupplier?.id === s.id ? "border-brand-500 bg-brand-50 dark:bg-brand-500/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                   }`}
                 >
                   <p className="font-bold text-gray-900 dark:text-gray-100">{s.name}</p>
@@ -496,7 +496,7 @@ function NewPurchasePageContent() {
                       />
                     </label>
                   </div>
-                  <p className="mt-1 text-left text-sm font-bold text-brand-700">
+                  <p className="mt-1 text-left text-sm font-bold text-brand-700 dark:text-brand-300">
                     {formatEGP(line.unitCost * line.quantity)}
                   </p>
                 </li>
