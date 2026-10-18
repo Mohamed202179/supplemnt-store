@@ -242,7 +242,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-          <h2 className="mb-3 text-sm font-bold text-gray-900">{t("settings_password_section")}</h2>
+          <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">{t("settings_password_section")}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-3">
             {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
