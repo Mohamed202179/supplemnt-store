@@ -310,7 +310,7 @@ export default function SalesPage() {
       <div className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">بيع جديد</h1>
-          <Link href="/sales/history" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600">
+          <Link href="/sales/history" className="flex items-center gap-0.5 text-xs font-semibold text-brand-600 dark:text-brand-300">
             سجل المبيعات
             <ChevronLeft className="h-3.5 w-3.5" />
           </Link>
@@ -405,7 +405,7 @@ export default function SalesPage() {
                     setStep("products");
                   }}
                   className={`w-full rounded-xl border p-3 text-right text-sm ${
-                    selectedCustomer?.id === c.id ? "border-brand-500 bg-brand-50" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                    selectedCustomer?.id === c.id ? "border-brand-500 bg-brand-50 dark:bg-brand-500/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                   }`}
                 >
                   <p className="font-bold text-gray-900 dark:text-gray-100">{c.name}</p>
@@ -591,7 +591,7 @@ export default function SalesPage() {
                         +
                       </button>
                     </div>
-                    <span className="font-bold text-brand-700">
+                    <span className="font-bold text-brand-700 dark:text-brand-300">
                       {formatEGP(line.product.selling_price * line.quantity)}
                     </span>
                   </div>
