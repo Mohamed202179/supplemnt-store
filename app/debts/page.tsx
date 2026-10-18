@@ -42,7 +42,7 @@ export default function DebtsPage() {
           <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
         ) : customers.length === 0 ? (
           <div className="py-10 text-center">
-            <CheckCircle2 className="mx-auto h-8 w-8 text-brand-500" />
+            <CheckCircle2 className="mx-auto h-8 w-8 text-brand-500 dark:text-brand-300" />
             <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">لا توجد مديونيات حالياً</p>
           </div>
         ) : (
