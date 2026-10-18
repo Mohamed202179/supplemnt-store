@@ -243,7 +243,7 @@ function SuppliersPageContent() {
                         </div>
                         <div className="text-left">
                           <p className="text-xs text-gray-400 dark:text-gray-500">مستحق له</p>
-                          <p className={`font-bold ${s.current_debt > 0 ? "text-red-600" : "text-brand-700"}`}>
+                          <p className={`font-bold ${s.current_debt > 0 ? "text-red-600" : "text-brand-700 dark:text-brand-300"}`}>
                             {formatEGP(s.current_debt)}
                           </p>
                         </div>
