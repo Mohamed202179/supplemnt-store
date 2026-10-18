@@ -145,7 +145,7 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2 text-sm">
                   <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
-                  <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
+                  <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.amount)}</span>
                 </li>
               ))}
             </ul>
