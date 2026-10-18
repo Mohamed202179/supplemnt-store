@@ -478,7 +478,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/sales/history"
-                className="mt-2 block py-2 text-center text-xs font-semibold text-brand-600"
+                className="mt-2 block py-2 text-center text-xs font-semibold text-brand-600 dark:text-brand-300"
               >
                 {t("view_all_sales")}
               </Link>
