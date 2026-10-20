@@ -149,8 +149,8 @@ export default function SalesHistoryPage() {
 
   return (
     <div>
-      {/* Navy header (sales history only) */}
-      <header className="sticky top-0 z-30 bg-gradient-to-br from-[#0b1736] via-[#14234f] to-[#1d3270] px-4 pb-5 pt-4 text-white shadow-md">
+      {/* Mr Supplement monochrome header (sales history only) */}
+      <header className="sticky top-0 z-30 bg-gradient-to-br from-[#111111] via-[#202020] to-[#303030] px-4 pb-5 pt-4 text-white shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -205,7 +205,7 @@ export default function SalesHistoryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ابحث برقم الفاتورة أو اسم العميل..."
-              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pe-4 ps-12 text-sm text-gray-900 shadow-sm focus:border-[#1d3270] focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pe-4 ps-12 text-sm text-gray-900 shadow-sm focus:border-gray-900 dark:focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </div>
           <button
@@ -214,7 +214,7 @@ export default function SalesHistoryPage() {
             aria-expanded={showFilters}
             className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${
               showFilters || hasDateFilter
-                ? "border-[#1d3270] bg-[#1d3270] text-white"
+                ? "border-gray-900 bg-gray-900 dark:border-gray-100 dark:bg-gray-100 text-white dark:text-gray-900"
                 : "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
             }`}
           >
@@ -236,7 +236,7 @@ export default function SalesHistoryPage() {
                   value={dateFrom}
                   max={dateTo || undefined}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 [color-scheme:light] focus:border-[#1d3270] focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 [color-scheme:light] focus:border-gray-900 dark:focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
                 />
               </label>
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300">
@@ -246,7 +246,7 @@ export default function SalesHistoryPage() {
                   value={dateTo}
                   min={dateFrom || undefined}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 [color-scheme:light] focus:border-[#1d3270] focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 [color-scheme:light] focus:border-gray-900 dark:focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
                 />
               </label>
             </div>
@@ -280,21 +280,21 @@ export default function SalesHistoryPage() {
                 aria-pressed={active}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${
                   active
-                    ? "border-[#1d3270] bg-[#1d3270] text-white dark:border-[#2c4690] dark:bg-[#2c4690]"
+                    ? "border-gray-900 bg-gray-900 dark:border-gray-100 dark:bg-gray-100 text-white dark:text-gray-900"
                     : "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                 }`}
               >
                 {c.key === "completed" && (
-                  <CheckCircle2 className={`h-4 w-4 ${active ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
+                  <CheckCircle2 className={`h-4 w-4 ${active ? "text-white dark:text-gray-900" : "text-emerald-600 dark:text-emerald-400"}`} />
                 )}
                 {c.key === "cancelled" && (
-                  <XCircle className={`h-4 w-4 ${active ? "text-white" : "text-red-600 dark:text-red-400"}`} />
+                  <XCircle className={`h-4 w-4 ${active ? "text-white dark:text-gray-900" : "text-red-600 dark:text-red-400"}`} />
                 )}
                 {c.label}
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] ${
                     active
-                      ? "bg-white text-[#1d3270]"
+                      ? "bg-white text-gray-900 dark:bg-gray-900 dark:text-white"
                       : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                   }`}
                 >
