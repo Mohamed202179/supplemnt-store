@@ -33,7 +33,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!checked) return;
-    if (!authed && pathname !== "/login") {
+    if (!authed && pathname !== "/login" && pathname !== "/reset-password") {
       router.replace("/login");
     }
     if (authed && pathname === "/login") {
@@ -41,7 +41,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [checked, authed, pathname, router]);
 
-  if (pathname === "/login") return <>{children}</>;
+  if (pathname === "/login" || pathname === "/reset-password") return <>{children}</>;
 
   if (!checked) {
     return (
