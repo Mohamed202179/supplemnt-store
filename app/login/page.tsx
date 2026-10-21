@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +36,25 @@ export default function LoginPage() {
 
     router.replace("/");
     router.refresh();
+  }
+
+  async function handleForgotPassword() {
+    setError("");
+    setResetMessage("");
+    if (!email.trim()) {
+      setError(lang === "ar" ? "اكتب بريدك الإلكتروني أولًا لاستعادة كلمة المرور." : "Enter your email first to reset your password.");
+      return;
+    }
+    setResetLoading(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetLoading(false);
+    if (resetError) {
+      setError(lang === "ar" ? "تعذر إرسال رسالة الاستعادة. حاول مرة أخرى لاحقًا." : "Could not send the reset email. Please try again later.");
+      return;
+    }
+    setResetMessage(lang === "ar" ? "لو البريد مسجل، هتوصلك رسالة فيها رابط تعيين كلمة مرور جديدة." : "If this email is registered, you'll receive a password reset link.");
   }
 
   return (
@@ -59,6 +80,7 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900">
+          {resetMessage && <div role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-700">{resetMessage}</div>}
           {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
           <label className="block">
@@ -85,6 +107,15 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </label>
+
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={resetLoading || loading}
+            className="block w-full text-center text-sm font-semibold text-brand-600 disabled:opacity-60"
+          >
+            {resetLoading ? (lang === "ar" ? "جارِ الإرسال..." : "Sending...") : (lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot password?")}
+          </button>
 
           <button
             type="submit"
