@@ -5,6 +5,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { RoleProvider } from "@/components/RoleProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import NavDebug from "@/components/NavDebug"; // TEMP navdebug
 
 export const metadata: Metadata = {
   title: "Daily Dose Supplements",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RoleProvider>
               <AuthGate>{children}</AuthGate>
               <ServiceWorkerRegister />
+              <NavDebug /> {/* TEMP navdebug */}
             </RoleProvider>
           </LanguageProvider>
         </ThemeProvider>
