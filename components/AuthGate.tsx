@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,11 +7,20 @@ import { supabase } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import DesktopNav from "@/components/DesktopNav";
 
-export default function AuthGate({ children }: { children: React.ReactNode }) {
+export default function AuthGate({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
+
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
 
   useEffect(() => {
     let mounted = true;
@@ -21,9 +31,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       setChecked(true);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthed(!!session);
-    });
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setAuthed(!!session);
+      }
+    );
 
     return () => {
       mounted = false;
@@ -33,15 +45,21 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!checked) return;
-    if (!authed && pathname !== "/login") {
+
+    if (!authed && !isPublicRoute) {
       router.replace("/login");
     }
+
     if (authed && pathname === "/login") {
       router.replace("/");
     }
-  }, [checked, authed, pathname, router]);
+  }, [checked, authed, isPublicRoute, pathname, router]);
 
-  if (pathname === "/login") return <>{children}</>;
+  // Public authentication pages must remain accessible without a session.
+  // Do not render the app navigation on login or password recovery pages.
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   if (!checked) {
     return (
@@ -54,7 +72,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (!authed) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <p className="text-sm text-gray-400">جارِ التحويل لتسجيل الدخول...</p>
+        <p className="text-sm text-gray-400">
+          جارِ التحويل لتسجيل الدخول...
+        </p>
       </div>
     );
   }
