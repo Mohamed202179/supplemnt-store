@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/components/RoleProvider";
+import { navLog, navSnapshot } from "@/lib/navDebug"; // TEMP navdebug
 
 // Wraps a page that only the store owner should be able to use.
 // A cashier who navigates here directly (e.g. by typing the URL) sees a
@@ -14,6 +15,7 @@ export default function OwnerGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (roleLoaded && !isOwner) {
+      navLog("ownergate-redirect", { to: "/", reason: "role-loaded-not-owner", roleLoaded, isOwner, ...navSnapshot() }); // TEMP navdebug
       router.replace("/");
     }
   }, [roleLoaded, isOwner, router]);

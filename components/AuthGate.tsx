@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import DesktopNav from "@/components/DesktopNav";
+import { navLog, navSnapshot } from "@/lib/navDebug"; // TEMP navdebug
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,9 +35,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!checked) return;
     if (!authed && pathname !== "/login" && pathname !== "/reset-password") {
+      navLog("authgate-redirect", { to: "/login", reason: "no-session-on-protected-route", checked, authed, ...navSnapshot() }); // TEMP navdebug
       router.replace("/login");
     }
     if (authed && pathname === "/login") {
+      navLog("authgate-redirect", { to: "/", reason: "session-present-on-login", checked, authed, ...navSnapshot() }); // TEMP navdebug
       router.replace("/");
     }
   }, [checked, authed, pathname, router]);
