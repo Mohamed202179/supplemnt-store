@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -11,6 +12,8 @@ import { ChevronUp, ChevronDown, ChevronLeft, ShoppingBag, Package, FolderOpen }
 import CategoryTile from "@/components/CategoryTile";
 
 const NO_CATEGORY = "__none__";
+const CATEGORY_HISTORY_FLAG = "__productsCategoryView";
+const CATEGORY_HISTORY_ID = "__productsCategoryId";
 
 function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,26 +23,88 @@ function ProductsPageContent() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-  // null = show the category grid; otherwise a category id (or NO_CATEGORY
-  // for uncategorized products) selects which category's products to browse.
   const [viewCategoryId, setViewCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     load();
   }, []);
 
+  // Keep the selected category synchronized with browser Back/Forward.
+  useEffect(() => {
+    function handlePopState(event: PopStateEvent) {
+      const state = event.state;
+
+      if (
+        state &&
+        state[CATEGORY_HISTORY_FLAG] === true &&
+        typeof state[CATEGORY_HISTORY_ID] === "string"
+      ) {
+        setViewCategoryId(state[CATEGORY_HISTORY_ID]);
+      } else {
+        setViewCategoryId(null);
+      }
+
+      setSearch("");
+    }
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  // Add a same-URL history entry when opening a category.
+  function openCategory(categoryId: string) {
+    const currentState = window.history.state;
+    const baseState =
+      currentState && typeof currentState === "object"
+        ? currentState
+        : {};
+
+    window.history.pushState(
+      {
+        ...baseState,
+        [CATEGORY_HISTORY_FLAG]: true,
+        [CATEGORY_HISTORY_ID]: categoryId,
+      },
+      "",
+      window.location.href
+    );
+
+    setSearch("");
+    setViewCategoryId(categoryId);
+  }
+
+  // Return to the category grid without adding another history entry.
+  function backToCategories() {
+    setSearch("");
+
+    if (
+      window.history.state &&
+      window.history.state[CATEGORY_HISTORY_FLAG] === true
+    ) {
+      window.history.back();
+      return;
+    }
+
+    setViewCategoryId(null);
+  }
+
   async function load() {
     setLoading(true);
-    const [{ data: prods }, { data: grps }, { data: cats }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*, categories(name)")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false }),
-      supabase.from("product_groups").select("*, categories(name)").order("name"),
-      supabase.from("categories").select("*").order("name"),
-    ]);
+
+    const [{ data: prods }, { data: grps }, { data: cats }] =
+      await Promise.all([
+        supabase
+          .from("products")
+          .select("*, categories(name)")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+        supabase.from("product_groups").select("*, categories(name)").order("name"),
+        supabase.from("categories").select("*").order("name"),
+      ]);
+
     setProducts((prods ?? []) as Product[]);
     setGroups((grps ?? []) as ProductGroup[]);
     setCategories((cats ?? []) as Category[]);
@@ -47,7 +112,12 @@ function ProductsPageContent() {
   }
 
   async function deactivate(id: string) {
-    if (!confirm("هل تريد إيقاف تفعيل هذا المنتج؟ لن يظهر في نقطة البيع بعد ذلك.")) return;
+    if (
+      !confirm(
+        "هل تريد إيقاف تفعيل هذا المنتج؟ لن يظهر في نقطة البيع بعد ذلك."
+      )
+    ) return;
+
     await supabase.from("products").update({ is_active: false }).eq("id", id);
     load();
   }
@@ -61,10 +131,10 @@ function ProductsPageContent() {
     });
   }
 
-  // ---------- Category grid (landing view) ----------
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     let uncategorized = 0;
+
     for (const p of products) {
       if (p.category_id) {
         counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
@@ -72,19 +142,24 @@ function ProductsPageContent() {
         uncategorized++;
       }
     }
+
     return { counts, uncategorized };
   }, [products]);
 
-  // ---------- Filtered list (inside a selected category) ----------
   function matchesSearchAndFilters(p: Product) {
     const matchesSearch =
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.brand ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (p.barcode ?? "").includes(search);
+
     const matchesCategory =
-      viewCategoryId === NO_CATEGORY ? !p.category_id : p.category_id === viewCategoryId;
+      viewCategoryId === NO_CATEGORY
+        ? !p.category_id
+        : p.category_id === viewCategoryId;
+
     const matchesLowStock = !lowStockOnly || p.current_stock <= p.min_stock;
+
     return matchesSearch && matchesCategory && matchesLowStock;
   }
 
@@ -104,6 +179,7 @@ function ProductsPageContent() {
   }, [groups, products, search, viewCategoryId, lowStockOnly]);
 
   const isEmpty = standaloneProducts.length === 0 && visibleGroups.length === 0;
+
   const currentCategoryName =
     viewCategoryId === NO_CATEGORY
       ? "بدون تصنيف"
@@ -126,17 +202,23 @@ function ProductsPageContent() {
 
       <div className="space-y-3 p-4">
         {loading ? (
-          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>
+          <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+            جارِ التحميل...
+          </p>
         ) : viewCategoryId === null ? (
-          // ---------- Category grid ----------
           <div className="grid grid-cols-2 gap-3">
             {categories.map((c) => (
               <button
                 key={c.id}
-                onClick={() => setViewCategoryId(c.id)}
+                onClick={() => openCategory(c.id)}
                 className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
-                <CategoryTile name={c.name} imageUrl={c.image_url} size="h-20 w-20" iconSize="h-14 w-14" />
+                <CategoryTile
+                  name={c.name}
+                  imageUrl={c.image_url}
+                  size="h-20 w-20"
+                  iconSize="h-14 w-14"
+                />
                 <span className="font-bold text-gray-900 dark:text-gray-100">{c.name}</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {categoryCounts.counts.get(c.id) ?? 0} منتج
@@ -146,7 +228,7 @@ function ProductsPageContent() {
 
             {categoryCounts.uncategorized > 0 && (
               <button
-                onClick={() => setViewCategoryId(NO_CATEGORY)}
+                onClick={() => openCategory(NO_CATEGORY)}
                 className="flex flex-col items-center gap-2 rounded-2xl bg-white p-4 text-center shadow-sm active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
               >
                 <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
@@ -166,13 +248,9 @@ function ProductsPageContent() {
             )}
           </div>
         ) : (
-          // ---------- Products inside the selected category ----------
           <>
             <button
-              onClick={() => {
-                setViewCategoryId(null);
-                setSearch("");
-              }}
+              onClick={backToCategories}
               className="flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300"
             >
               <ChevronLeft className="h-4 w-4 rotate-180" />
@@ -197,12 +275,18 @@ function ProductsPageContent() {
             </label>
 
             {isEmpty ? (
-              <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">لا توجد منتجات مطابقة</p>
+              <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+                لا توجد منتجات مطابقة
+              </p>
             ) : (
               <div className="space-y-2">
                 {visibleGroups.map(({ group, variants }) => {
                   const expanded = expandedGroups.has(group.id);
-                  const totalStock = variants.reduce((sum, v) => sum + v.current_stock, 0);
+                  const totalStock = variants.reduce(
+                    (sum, v) => sum + v.current_stock,
+                    0
+                  );
+
                   return (
                     <div key={group.id} className="rounded-2xl bg-white dark:bg-gray-900 shadow-sm">
                       <button
@@ -220,13 +304,17 @@ function ProductsPageContent() {
                             <ShoppingBag className="h-6 w-6" />
                           </div>
                         )}
+
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-bold text-gray-900 dark:text-gray-100">{group.name}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{group.categories?.name || "بدون تصنيف"}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            {group.categories?.name || "بدون تصنيف"}
+                          </p>
                           <p className="mt-1 text-xs font-semibold text-brand-600 dark:text-brand-300">
                             {variants.length} طعم/حجم · إجمالي الكمية {totalStock}
                           </p>
                         </div>
+
                         <span className="shrink-0 text-gray-300 dark:text-gray-600">
                           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </span>
@@ -248,6 +336,7 @@ function ProductsPageContent() {
                                     <Package className="h-5 w-5" />
                                   </div>
                                 )}
+
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start justify-between gap-2">
                                     <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
@@ -255,14 +344,18 @@ function ProductsPageContent() {
                                     </p>
                                     <StockBadge status={getStockStatus(p)} />
                                   </div>
+
                                   <div className="mt-1 flex items-center justify-between text-sm">
                                     <span className="text-gray-500 dark:text-gray-400">
                                       الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
                                     </span>
-                                    <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.selling_price)}</span>
+                                    <span className="font-bold text-brand-700 dark:text-brand-300">
+                                      {formatEGP(p.selling_price)}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
+
                               <div className="mt-2 flex gap-2">
                                 <Link
                                   href={`/products/${p.id}/edit`}
@@ -279,6 +372,7 @@ function ProductsPageContent() {
                               </div>
                             </div>
                           ))}
+
                           <Link
                             href={`/products/new?group=${group.id}`}
                             className="block w-full rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 py-2.5 text-center text-xs font-bold text-brand-700"
@@ -305,20 +399,26 @@ function ProductsPageContent() {
                           <Package className="h-6 w-6" />
                         </div>
                       )}
+
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-bold text-gray-900 dark:text-gray-100">{p.name}</p>
                         <p className="text-xs text-gray-400 dark:text-gray-500">
                           {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
                         </p>
                       </div>
+
                       <StockBadge status={getStockStatus(p)} />
                     </div>
+
                     <div className="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-2 text-sm">
                       <span className="text-gray-500 dark:text-gray-400">
                         الكمية: <b className="text-gray-800 dark:text-gray-200">{p.current_stock}</b>
                       </span>
-                      <span className="font-bold text-brand-700 dark:text-brand-300">{formatEGP(p.selling_price)}</span>
+                      <span className="font-bold text-brand-700 dark:text-brand-300">
+                        {formatEGP(p.selling_price)}
+                      </span>
                     </div>
+
                     <div className="mt-2 flex gap-2">
                       <Link
                         href={`/products/${p.id}/edit`}
