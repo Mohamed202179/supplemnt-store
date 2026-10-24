@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,6 +14,54 @@ interface Props {
 
 type GroupMode = "none" | "existing" | "new";
 
+async function compressProductImage(file: File): Promise<File> {
+  const supportedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+  if (!supportedTypes.includes(file.type)) {
+    return file;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxDimension = 1600;
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(bitmap.width, bitmap.height)
+    );
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.82);
+    });
+
+    if (!blob || blob.type !== "image/webp" || blob.size >= file.size) {
+      return file;
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "product-image";
+
+    return new File([blob], `${baseName}.webp`, {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  }
+}
+
 export default function ProductForm({ initial, presetGroupId }: Props) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -20,20 +69,23 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // "Quick add variant" mode: adding a brand-new product directly into an
-  // existing group (via the "+ أضف طعم/حجم جديد" button). In this mode we
-  // skip asking for name/category/brand again — they're inherited from the
-  // group — and only ask for what actually differs per variant.
+  // Quick add variant mode: inherit shared product details from an existing group.
   const isQuickVariant = !initial && !!presetGroupId;
   const [presetGroupInfo, setPresetGroupInfo] = useState<ProductGroup | null>(null);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
-  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    initial?.image_url ?? null
+  );
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    initial?.image_url ?? null
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const initialGroupId = initial?.group_id ?? presetGroupId ?? "";
-  const [groupMode, setGroupMode] = useState<GroupMode>(initialGroupId ? "existing" : "none");
+  const [groupMode, setGroupMode] = useState<GroupMode>(
+    initialGroupId ? "existing" : "none"
+  );
   const [selectedGroupId, setSelectedGroupId] = useState(initialGroupId);
   const [newGroupName, setNewGroupName] = useState("");
 
@@ -57,6 +109,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       .select("*")
       .order("name")
       .then(({ data }) => setCategories((data ?? []) as Category[]));
+
     supabase
       .from("product_groups")
       .select("*")
@@ -64,11 +117,9 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       .then(({ data }) => setGroups((data ?? []) as ProductGroup[]));
   }, []);
 
-  // In quick-variant mode, fetch the group's shared identity (name,
-  // category, brand) and silently pre-fill the form with it, instead of
-  // making the user re-type product details that are already known.
   useEffect(() => {
     if (!isQuickVariant || !presetGroupId) return;
+
     supabase
       .from("product_groups")
       .select("*")
@@ -76,6 +127,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       .single()
       .then(({ data }) => {
         if (!data) return;
+
         const group = data as ProductGroup;
         setPresetGroupInfo(group);
         setForm((f) => ({
@@ -85,6 +137,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
           brand: group.brand ?? "",
         }));
       });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isQuickVariant, presetGroupId]);
 
@@ -98,10 +151,13 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
 
     if (!file.type.startsWith("image/")) {
       setError("اختر ملف صورة صالح (JPG, PNG...)");
+      e.target.value = "";
       return;
     }
+
     if (file.size > 5 * 1024 * 1024) {
       setError("حجم الصورة كبير جدًا (الحد الأقصى 5 ميجا)");
+      e.target.value = "";
       return;
     }
 
@@ -116,25 +172,46 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
     setImageUrl(null);
   }
 
-  async function uploadImageIfNeeded(): Promise<{ url: string | null; failed: boolean }> {
+  async function uploadImageIfNeeded(): Promise<{
+    url: string | null;
+    failed: boolean;
+  }> {
     if (!imageFile) return { url: imageUrl, failed: false };
 
     setUploadingImage(true);
-    const ext = imageFile.name.split(".").pop();
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error: uploadErr } = await supabase.storage
-      .from("product-images")
-      .upload(path, imageFile, { upsert: false });
+    try {
+      const optimizedFile = await compressProductImage(imageFile);
+      const originalExt =
+        imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const ext =
+        optimizedFile.type === "image/webp" ? "webp" : originalExt;
 
-    setUploadingImage(false);
+      const path = `${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${ext}`;
 
-    if (uploadErr) {
+      const { error: uploadErr } = await supabase.storage
+        .from("product-images")
+        .upload(path, optimizedFile, {
+          upsert: false,
+          contentType: optimizedFile.type || imageFile.type,
+        });
+
+      if (uploadErr) {
+        return { url: null, failed: true };
+      }
+
+      const { data } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(path);
+
+      return { url: data.publicUrl, failed: false };
+    } catch {
       return { url: null, failed: true };
+    } finally {
+      setUploadingImage(false);
     }
-
-    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-    return { url: data.publicUrl, failed: false };
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -145,14 +222,20 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       setError("اسم المنتج مطلوب");
       return;
     }
-    if (Number(form.selling_price) < 0 || Number(form.purchase_price) < 0) {
+
+    if (
+      Number(form.selling_price) < 0 ||
+      Number(form.purchase_price) < 0
+    ) {
       setError("الأسعار يجب أن تكون أرقامًا صحيحة");
       return;
     }
+
     if (groupMode === "new" && !newGroupName.trim()) {
       setError("أدخل اسم المجموعة الجديدة");
       return;
     }
+
     if (groupMode === "existing" && !selectedGroupId) {
       setError("اختر مجموعة من القائمة");
       return;
@@ -161,20 +244,23 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
     setSaving(true);
 
     let finalImageUrl = imageUrl;
+
     if (imageFile) {
       const uploadResult = await uploadImageIfNeeded();
+
       if (uploadResult.failed) {
         setSaving(false);
         setError("حدث خطأ أثناء رفع الصورة، حاول مرة أخرى");
         return;
       }
+
       finalImageUrl = uploadResult.url;
     } else if (imagePreview === null) {
       finalImageUrl = null;
     }
 
-    // Resolve the group_id: create a new group first if needed.
     let finalGroupId: string | null = null;
+
     if (groupMode === "existing") {
       finalGroupId = selectedGroupId;
     } else if (groupMode === "new") {
@@ -194,6 +280,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         setError("حدث خطأ أثناء إنشاء المجموعة، حاول مرة أخرى");
         return;
       }
+
       finalGroupId = newGroup.id;
     }
 
@@ -214,8 +301,12 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
     };
 
     let result;
+
     if (initial) {
-      result = await supabase.from("products").update(payload).eq("id", initial.id);
+      result = await supabase
+        .from("products")
+        .update(payload)
+        .eq("id", initial.id);
     } else {
       result = await supabase.from("products").insert(payload);
     }
@@ -238,11 +329,16 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       {error && (
-        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>
+        <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
       )}
 
       <div>
-        <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">صورة المنتج (اختياري)</span>
+        <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
+          صورة المنتج (اختياري)
+        </span>
+
         {imagePreview ? (
           <div className="relative w-full">
             <img
@@ -262,7 +358,12 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
           <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
             <Camera className="h-7 w-7" />
             <span className="text-xs font-semibold">اضغط لإضافة صورة</span>
-            <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
           </label>
         )}
       </div>
@@ -278,69 +379,78 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
-        <span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
-          هل هذا المنتج له أطعمة أو أحجام مختلفة؟
-        </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setGroupMode("none")}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
-              groupMode === "none" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-            }`}
-          >
-            منتج مستقل
-          </button>
-          <button
-            type="button"
-            onClick={() => setGroupMode("existing")}
-            disabled={groups.length === 0}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold disabled:opacity-40 ${
-              groupMode === "existing" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-            }`}
-          >
-            جزء من مجموعة موجودة
-          </button>
-          <button
-            type="button"
-            onClick={() => setGroupMode("new")}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
-              groupMode === "new" ? "bg-brand-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700"
-            }`}
-          >
-            + مجموعة جديدة
-          </button>
-        </div>
+          <span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-400">
+            هل هذا المنتج له أطعمة أو أحجام مختلفة؟
+          </span>
 
-        {groupMode === "existing" && (
-          <select
-            value={selectedGroupId}
-            onChange={(e) => setSelectedGroupId(e.target.value)}
-            className="input mt-2"
-          >
-            <option value="">اختر المجموعة...</option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setGroupMode("none")}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+                groupMode === "none"
+                  ? "bg-brand-600 text-white"
+                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+              }`}
+            >
+              منتج مستقل
+            </button>
 
-        {groupMode === "new" && (
-          <input
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="اسم المجموعة (مثال: واي بروتين - Optimum Nutrition)"
-            className="input mt-2"
-          />
-        )}
+            <button
+              type="button"
+              onClick={() => setGroupMode("existing")}
+              disabled={groups.length === 0}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold disabled:opacity-40 ${
+                groupMode === "existing"
+                  ? "bg-brand-600 text-white"
+                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+              }`}
+            >
+              جزء من مجموعة موجودة
+            </button>
 
-        {groupMode !== "none" && (
-          <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-            استخدم حقلي "النكهة" و"الحجم" تحت عشان تميّز هذا الطعم/الحجم عن باقي المجموعة.
-          </p>
-        )}
+            <button
+              type="button"
+              onClick={() => setGroupMode("new")}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+                groupMode === "new"
+                  ? "bg-brand-600 text-white"
+                  : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+              }`}
+            >
+              + مجموعة جديدة
+            </button>
+          </div>
+
+          {groupMode === "existing" && (
+            <select
+              value={selectedGroupId}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              className="input mt-2"
+            >
+              <option value="">اختر المجموعة...</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {groupMode === "new" && (
+            <input
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="اسم المجموعة (مثال: واي بروتين - Optimum Nutrition)"
+              className="input mt-2"
+            />
+          )}
+
+          {groupMode !== "none" && (
+            <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
+              استخدم حقلي "النكهة" و"الحجم" تحت عشان تميّز هذا الطعم/الحجم عن باقي المجموعة.
+            </p>
+          )}
         </div>
       )}
 
@@ -357,7 +467,11 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
 
       {!isQuickVariant && (
         <Field label="التصنيف">
-          <select value={form.category_id} onChange={(e) => update("category_id", e.target.value)} className="input">
+          <select
+            value={form.category_id}
+            onChange={(e) => update("category_id", e.target.value)}
+            className="input"
+          >
             <option value="">بدون تصنيف</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -371,20 +485,39 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       <div className="grid grid-cols-2 gap-3">
         {!isQuickVariant && (
           <Field label="الماركة">
-            <input value={form.brand} onChange={(e) => update("brand", e.target.value)} className="input" />
+            <input
+              value={form.brand}
+              onChange={(e) => update("brand", e.target.value)}
+              className="input"
+            />
           </Field>
         )}
+
         <Field label="النكهة">
-          <input value={form.flavor} onChange={(e) => update("flavor", e.target.value)} className="input" />
+          <input
+            value={form.flavor}
+            onChange={(e) => update("flavor", e.target.value)}
+            className="input"
+          />
         </Field>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="الحجم">
-          <input value={form.size} onChange={(e) => update("size", e.target.value)} className="input" />
+          <input
+            value={form.size}
+            onChange={(e) => update("size", e.target.value)}
+            className="input"
+          />
         </Field>
+
         <Field label="الباركود">
-          <input value={form.barcode} onChange={(e) => update("barcode", e.target.value)} className="input" inputMode="numeric" />
+          <input
+            value={form.barcode}
+            onChange={(e) => update("barcode", e.target.value)}
+            className="input"
+            inputMode="numeric"
+          />
         </Field>
       </div>
 
@@ -400,6 +533,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             step="0.01"
           />
         </Field>
+
         <Field label="سعر البيع (ج.م) *">
           <input
             value={form.selling_price}
@@ -424,6 +558,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
             min={0}
           />
         </Field>
+
         <Field label="الحد الأدنى للمخزون">
           <input
             value={form.min_stock}
@@ -447,10 +582,20 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
 
       <button
         type="submit"
-        disabled={saving || uploadingImage || (isQuickVariant && !presetGroupInfo)}
+        disabled={
+          saving ||
+          uploadingImage ||
+          (isQuickVariant && !presetGroupInfo)
+        }
         className="w-full rounded-xl bg-brand-600 py-3.5 text-base font-bold text-white shadow-sm active:bg-brand-700 disabled:opacity-60"
       >
-        {uploadingImage ? "جارِ رفع الصورة..." : saving ? "جارِ الحفظ..." : initial ? "حفظ التعديلات" : "إضافة المنتج"}
+        {uploadingImage
+          ? "جارِ رفع الصورة..."
+          : saving
+            ? "جارِ الحفظ..."
+            : initial
+              ? "حفظ التعديلات"
+              : "إضافة المنتج"}
       </button>
 
       <style jsx global>{`
@@ -480,10 +625,18 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
+        {label}
+      </span>
       {children}
     </label>
   );
