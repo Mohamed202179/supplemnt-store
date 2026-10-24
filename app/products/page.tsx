@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, Product, Category, ProductGroup } from "@/lib/types";
@@ -29,9 +29,37 @@ function ProductsPageContent() {
   // null = show the category grid; otherwise show the selected category.
   const [viewCategoryId, setViewCategoryId] = useState<string | null>(null);
 
+  // Scroll position of the category grid, saved right before a category opens
+  // so it can be restored when the user returns to the grid.
+  const gridScrollYRef = useRef(0);
+  // Previous value of viewCategoryId, so the scroll effect only reacts to a
+  // real grid <-> category view change (not to search/filter/data changes).
+  const prevViewCategoryIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     load();
   }, []);
+
+  // Scroll handling for view switches. useLayoutEffect runs after React has
+  // updated the DOM but before the browser paints, so there is no visible jump.
+  useLayoutEffect(() => {
+    if (prevViewCategoryIdRef.current === viewCategoryId) return;
+    prevViewCategoryIdRef.current = viewCategoryId;
+
+    if (viewCategoryId !== null) {
+      // Category list: always start from the top.
+      window.scrollTo(0, 0);
+    } else {
+      // Back on the category grid: restore the saved position.
+      window.scrollTo(0, gridScrollYRef.current);
+
+      // The grid history entry was switched to manual restoration in
+      // openCategory(); give it back to the browser now that we've restored.
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "auto";
+      }
+    }
+  }, [viewCategoryId]);
 
   // NEW: Keep the category screen synchronized with browser Back/Forward.
   useEffect(() => {
@@ -65,6 +93,14 @@ function ProductsPageContent() {
       currentState && typeof currentState === "object"
         ? currentState
         : {};
+
+    // Remember where the grid was scrolled to, and stop the browser from
+    // applying its own scroll restoration to this entry (Safari/iOS PWA would
+    // otherwise override ours). New entries inherit this mode from the current one.
+    gridScrollYRef.current = window.scrollY;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
 
     window.history.pushState(
       {
