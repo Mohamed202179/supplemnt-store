@@ -17,6 +17,7 @@ import {
   PackagePlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import { formatEGP, formatDate, Product, Sale } from "@/lib/types";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useRole } from "@/components/RoleProvider";
@@ -194,7 +195,7 @@ export default function DashboardPage() {
         style={{
           backgroundImage: headerImageUrl
             ? `linear-gradient(to bottom, rgba(10,10,20,0.55), rgba(20,15,50,0.88)), url('${headerImageUrl}')`
-            : "linear-gradient(135deg, #1a1740, #302cb7)",
+            : "linear-gradient(135deg, rgb(var(--brand-darker)), rgb(var(--brand-600)))",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -202,17 +203,19 @@ export default function DashboardPage() {
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <img
-              src="/icons/icon-192.png"
-              alt="Daily Dose"
+              src={brand.icon192}
+              alt={brand.shortName}
               className="h-8 w-8 shrink-0 rounded-xl object-cover sm:h-9 sm:w-9"
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-bold leading-tight">
-                Daily Dose
+                {brand.shortName}
               </p>
-              <p className="text-[10px] leading-tight opacity-70">
-                Supplements
-              </p>
+              {brand.tagline && (
+                <p className="text-[10px] leading-tight opacity-70">
+                  {brand.tagline}
+                </p>
+              )}
             </div>
           </div>
 
@@ -243,7 +246,7 @@ export default function DashboardPage() {
           {t("dashboard_welcome")} 👋
         </p>
         <h1 className="break-words text-lg font-bold sm:text-xl">
-          Daily Dose Supplements
+          {brand.name}
         </h1>
       </div>
 

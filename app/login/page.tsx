@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import { useLanguage } from "@/components/LanguageProvider";
 export default function LoginPage() {
   const router = useRouter();
@@ -84,12 +85,12 @@ export default function LoginPage() {
         </div>
         <div className="mb-8 text-center">
           <img
-            src="/icons/icon-512.png"
-            alt="Daily Dose Supplements"
+            src={brand.icon512}
+            alt={brand.name}
             className="mx-auto mb-3 h-20 w-20 rounded-2xl object-cover shadow-sm"
           />
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            Daily Dose Supplements
+            {brand.name}
           </h1>
           <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
             {t("login_subtitle")}

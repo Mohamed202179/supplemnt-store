@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { formatEGP, formatDateTime, getStockStatus, MOVEMENT_TYPE_LABELS, Product, StockMovement } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
@@ -56,6 +58,21 @@ export default function ProductStockPage({ params }: { params: { id: string } })
     }
 
     setSaving(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.adjustStock(product.id, target, reason.trim() || null);
+      } catch (e) {
+        setSaving(false);
+        setError(opError(e));
+        return;
+      }
+      setSaving(false);
+      setShowAdjust(false);
+      setReason("");
+      load();
+      return;
+    }
 
     await supabase.from("products").update({ current_stock: target }).eq("id", product.id);
 

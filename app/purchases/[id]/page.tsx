@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { Purchase, PurchaseItem, formatEGP, formatDateTime, paymentStatusLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
@@ -34,6 +36,17 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
 
     setError("");
     setCancelling(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.cancelPurchase(purchase.id);
+      } catch (e) {
+        setError(opError(e));
+      }
+      setCancelling(false);
+      load();
+      return;
+    }
 
     for (const item of items) {
       if (!item.product_id) continue;

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { Sale, SaleItem, Customer, formatEGP, formatDateTime, paymentStatusLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import { useRole } from "@/components/RoleProvider";
@@ -44,6 +46,17 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
 
     setError("");
     setCancelling(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.cancelSale(sale.id);
+      } catch (e) {
+        setError(opError(e));
+      }
+      setCancelling(false);
+      load();
+      return;
+    }
 
     for (const item of items) {
       if (!item.product_id) continue;

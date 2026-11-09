@@ -16,6 +16,7 @@ import {
   Tag,
   LucideIcon,
 } from "lucide-react";
+import { brand } from "@/lib/brand";
 
 // Colors sampled directly from the user's reference design (the accent/
 // underline color of each category card), so this matches their supplied
@@ -59,7 +60,7 @@ const STYLES: Record<string, Style> = {
   "حارق دهون": { from: "#3a1418", to: "#FF5539", Icon: Flame },
 };
 
-const DEFAULT_STYLE: Style = { from: "#1e1b4b", to: "#302cb7", Icon: Tag };
+const DEFAULT_STYLE: Style = { from: "#1e1b4b", to: brand.palette[600], Icon: Tag };
 
 function normalize(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");

@@ -8,12 +8,13 @@ const config: Config = {
       colors: {
         // Brand palette sampled directly from the Daily Dose logo
         // (deep navy/indigo gradient, white mark).
+        // Colors come from CSS variables (set per brand in lib/brand.ts; defaults in globals.css).
         brand: {
-          50: "#eef0fb",
-          100: "#dbdff7",
-          500: "#4641d2",
-          600: "#302cb7",
-          700: "#24219c",
+          50: "rgb(var(--brand-50) / <alpha-value>)",
+          100: "rgb(var(--brand-100) / <alpha-value>)",
+          500: "rgb(var(--brand-500) / <alpha-value>)",
+          600: "rgb(var(--brand-600) / <alpha-value>)",
+          700: "rgb(var(--brand-700) / <alpha-value>)",
         },
       },
       fontFamily: {

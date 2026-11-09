@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
+import { brand } from "@/lib/brand";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -13,4 +14,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// schema البراند: "public" لـ Daily Dose (زي ما كان)، أو schema مستقل للبراندات الجديدة.
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  db: { schema: brand.schema as "public" },
+});

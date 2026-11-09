@@ -5,19 +5,20 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { RoleProvider } from "@/components/RoleProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { brand, brandCssVars } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Daily Dose Supplements",
-  description: "نظام إدارة متجر Daily Dose Supplements",
-  manifest: "/manifest.json",
+  title: brand.name,
+  description: brand.description,
+  manifest: brand.manifest,
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: brand.icon192,
+    apple: brand.icon192,
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Daily Dose",
+    title: brand.shortName,
   },
 };
 
@@ -26,12 +27,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#302cb7",
+  themeColor: brand.themeColor,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" style={brandCssVars() as React.CSSProperties}>
       <body className="font-sans antialiased">
         <ThemeProvider>
           <LanguageProvider>
