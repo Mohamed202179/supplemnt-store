@@ -15,6 +15,10 @@ import {
   CalendarClock,
   ShoppingCart,
   PackagePlus,
+  UserPlus,
+  ChevronLeft,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
@@ -34,6 +38,8 @@ interface DashboardData {
   monthProfit: number;
   monthExpenses: number;
   weekSeries: DayPoint[];
+  yesterdaySales: number;
+  topProducts: { name: string; qty: number }[];
 }
 
 export default function DashboardPage() {
@@ -77,6 +83,7 @@ export default function DashboardPage() {
       { data: monthSales },
       { data: monthExpensesData },
       { data: weekSales },
+      { data: weekItems },
     ] = await Promise.all([
       supabase
         .from("sales")
@@ -104,6 +111,11 @@ export default function DashboardPage() {
         .select("total, profit, created_at")
         .eq("status", "completed")
         .gte("created_at", sevenDaysAgo.toISOString()),
+      supabase
+        .from("sale_items")
+        .select("product_name_snapshot, quantity, sales!inner(status, created_at)")
+        .eq("sales.status", "completed")
+        .gte("sales.created_at", sevenDaysAgo.toISOString()),
     ]);
 
     const todaySales = (todaySalesData ?? []).reduce(
@@ -172,6 +184,18 @@ export default function DashboardPage() {
       });
     }
 
+    // أكثر 3 منتجات مبيعًا في آخر 7 أيام (لو الاستعلام فشل نعرض القسم فاضي بدل ما نكسر الداشبورد)
+    const qtyByName = new Map<string, number>();
+    for (const it of (weekItems ?? []) as any[]) {
+      const name = String(it.product_name_snapshot ?? "");
+      if (!name) continue;
+      qtyByName.set(name, (qtyByName.get(name) ?? 0) + Number(it.quantity));
+    }
+    const topProducts = Array.from(qtyByName, ([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 3);
+    const yesterdaySales = weekSeries[5]?.sales ?? 0;
+
     setData({
       todaySales,
       todayInvoices,
@@ -183,6 +207,8 @@ export default function DashboardPage() {
       monthProfit: monthGrossProfit - monthExpenses,
       monthExpenses,
       weekSeries,
+      yesterdaySales,
+      topProducts,
     });
     setLoading(false);
   }
@@ -191,13 +217,23 @@ export default function DashboardPage() {
     ? data.lowStockProducts.length + data.expiringProducts.length
     : 0;
 
+  const locale = lang === "ar" ? "ar-EG" : "en-US";
+  const pctSign = lang === "ar" ? "٪" : "%";
+  const diffPct =
+    data && data.yesterdaySales > 0
+      ? ((data.todaySales - data.yesterdaySales) / data.yesterdaySales) * 100
+      : null;
+  const topMax = data?.topProducts[0]?.qty ?? 0;
+
   return (
     <div className="min-w-0">
       <div
-        className="relative overflow-hidden px-3 pb-2 pt-2 text-white sm:px-4 sm:pb-5 sm:pt-3 md:mx-4 md:mt-4 md:rounded-2xl"
+        className={`relative overflow-hidden px-3 pt-2 text-white sm:px-4 sm:pt-3 md:mx-4 md:mt-4 md:rounded-2xl ${
+          isOwner ? "pb-16 sm:pb-20" : "pb-2 sm:pb-5"
+        }`}
         style={{
           backgroundImage: headerImageUrl
-            ? `linear-gradient(to bottom, rgba(10,10,20,0.55), rgba(20,15,50,0.88)), url('${headerImageUrl}')`
+            ? `linear-gradient(to bottom, rgb(var(--brand-darker) / 0.55), rgb(var(--brand-darker) / 0.88)), url('${headerImageUrl}')`
             : "linear-gradient(135deg, rgb(var(--brand-darker)), rgb(var(--brand-600)))",
           backgroundSize: "cover",
           backgroundPosition: "center",
@@ -253,58 +289,125 @@ export default function DashboardPage() {
         </h1>
       </div>
 
-      <div className="mt-2 min-w-0 space-y-2 px-3 sm:mt-3 sm:space-y-3 sm:px-4 md:mt-4">
+      <div
+        className={`relative min-w-0 space-y-2 px-3 sm:space-y-3 sm:px-4 ${
+          isOwner ? "-mt-12 sm:-mt-14" : "mt-2 sm:mt-3 md:mt-4"
+        }`}
+      >
         {loading || !data ? (
           <div className="rounded-2xl bg-white p-5 text-center text-sm text-gray-400 shadow-sm dark:bg-gray-900 dark:text-gray-500 sm:p-6">
             {t("loading")}
           </div>
         ) : (
           <>
-            {isOwner &&
-              (data.lowStockProducts.length > 0 ||
-                data.expiringProducts.length > 0) && (
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
-                  {data.lowStockProducts.length > 0 && (
-                    <Link
-                      href="/inventory"
-                      className="min-w-0 rounded-2xl bg-amber-50 p-3 shadow-sm dark:bg-amber-500/10 sm:p-4"
+            {/* بطاقة مبيعات اليوم (للمالك) */}
+            {isOwner && (
+              <Link
+                href="/sales/history"
+                className="block min-w-0 rounded-2xl bg-white p-4 shadow-lg active:bg-gray-50 dark:bg-gray-900 dark:active:bg-gray-800"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    {t("stat_today_sales")}
+                  </p>
+                  {diffPct !== null && (
+                    <span
+                      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                        diffPct >= 0
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                          : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-300"
+                      }`}
                     >
-                      <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                      <p className="mt-2 break-words text-lg font-bold text-amber-700 dark:text-amber-300 sm:text-xl">
-                        {data.lowStockProducts.length}
-                      </p>
-                      <p className="break-words text-xs font-medium text-amber-700 dark:text-amber-400">
-                        {t("stat_low_stock")}
-                      </p>
-                    </Link>
-                  )}
-
-                  {data.expiringProducts.length > 0 && (
-                    <Link
-                      href="/inventory"
-                      className="min-w-0 rounded-2xl bg-red-50 p-3 shadow-sm dark:bg-red-500/10 sm:p-4"
-                    >
-                      <CalendarClock className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      <p className="mt-2 break-words text-lg font-bold text-red-700 dark:text-red-300 sm:text-xl">
-                        {data.expiringProducts.length}
-                      </p>
-                      <p className="break-words text-xs font-medium text-red-700 dark:text-red-400">
-                        {t("section_expiring_products")}
-                      </p>
-                    </Link>
+                      {diffPct >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                      {Math.abs(Math.round(diffPct)).toLocaleString(locale)}
+                      {pctSign} {t("dash_vs_yesterday")}
+                    </span>
                   )}
                 </div>
-              )}
+                <p className="mt-1 break-words text-3xl font-extrabold leading-tight text-gray-900 dark:text-gray-100">
+                  {formatEGP(data.todaySales, lang)}
+                </p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="min-w-0 text-xs text-gray-500 dark:text-gray-400">
+                    {data.todayInvoices} {t("stat_invoices_suffix")} · {t("dash_yesterday")}{" "}
+                    {formatEGP(data.yesterdaySales, lang)}
+                  </p>
+                  <Sparkline values={data.weekSeries.map((d) => d.sales)} />
+                </div>
+              </Link>
+            )}
 
+            {/* الأزرار السريعة */}
+            <div className="grid min-w-0 gap-2">
+              <Link
+                href="/sales"
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-3 py-4 text-center text-base font-bold text-white shadow-sm active:bg-brand-700"
+              >
+                <ShoppingCart className="h-5 w-5 shrink-0" />
+                <span className="break-words">{t("btn_new_sale")}</span>
+              </Link>
+              <div className={`grid min-w-0 gap-2 ${isOwner ? "grid-cols-2" : "grid-cols-1"}`}>
+                {isOwner && (
+                  <Link
+                    href="/purchases/new"
+                    className="flex min-w-0 items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white px-3 py-3 text-center text-sm font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800"
+                  >
+                    <PackagePlus className="h-5 w-5 shrink-0" />
+                    <span className="break-words">{t("btn_new_purchase")}</span>
+                  </Link>
+                )}
+                <Link
+                  href="/customers?new=1"
+                  className="flex min-w-0 items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white px-3 py-3 text-center text-sm font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800"
+                >
+                  <UserPlus className="h-5 w-5 shrink-0" />
+                  <span className="break-words">{t("btn_new_customer")}</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* شريط التنبيهات (للمالك) */}
+            {isOwner && alertCount > 0 && (
+              <Link
+                href="/inventory"
+                className="flex min-w-0 items-center justify-between gap-2 rounded-2xl bg-amber-50 px-3 py-3 text-xs font-semibold text-amber-800 shadow-sm dark:bg-amber-500/10 dark:text-amber-300 sm:text-sm"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 shrink-0" />
+                  <span className="break-words">
+                    {[
+                      data.lowStockProducts.length > 0
+                        ? `${data.lowStockProducts.length.toLocaleString(locale)} ${t("alert_low_short")}`
+                        : null,
+                      data.expiringProducts.length > 0
+                        ? `${data.expiringProducts.length.toLocaleString(locale)} ${t("alert_expiring_short")}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+                <ChevronLeft className="h-4 w-4 shrink-0" />
+              </Link>
+            )}
+
+            {/* كروت الأرقام (للمالك) */}
             {isOwner && (
               <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
                 <IconStatCard
-                  href="/sales/history"
-                  icon={<TrendingUp className="h-5 w-5" />}
-                  iconClass="bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-300"
-                  label={t("stat_today_sales")}
-                  value={formatEGP(data.todaySales, lang)}
-                  sub={`${data.todayInvoices} ${t("stat_invoices_suffix")}`}
+                  href="/reports"
+                  icon={<Wallet className="h-5 w-5" />}
+                  iconClass="bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-300"
+                  label={t("stat_month_profit")}
+                  value={formatEGP(data.monthProfit, lang)}
+                  valueClass={data.monthProfit < 0 ? "text-red-600 dark:text-red-400" : undefined}
+                />
+                <IconStatCard
+                  href="/expenses"
+                  icon={<Receipt className="h-5 w-5" />}
+                  iconClass="bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                  label={t("stat_month_expenses")}
+                  value={formatEGP(data.monthExpenses, lang)}
                 />
                 <IconStatCard
                   href="/inventory"
@@ -319,25 +422,6 @@ export default function DashboardPage() {
                   iconClass="bg-orange-50 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300"
                   label={t("stat_total_debts")}
                   value={formatEGP(data.totalDebts, lang)}
-                />
-                <IconStatCard
-                  href="/reports"
-                  icon={<Wallet className="h-5 w-5" />}
-                  iconClass="bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-300"
-                  label={t("stat_month_profit")}
-                  value={formatEGP(data.monthProfit, lang)}
-                  valueClass={
-                    data.monthProfit < 0
-                      ? "text-red-600 dark:text-red-400"
-                      : undefined
-                  }
-                />
-                <IconStatCard
-                  href="/expenses"
-                  icon={<Receipt className="h-5 w-5" />}
-                  iconClass="bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
-                  label={t("stat_month_expenses")}
-                  value={formatEGP(data.monthExpenses, lang)}
                 />
               </div>
             )}
@@ -365,29 +449,32 @@ export default function DashboardPage() {
               </section>
             )}
 
-            <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
-              <Link
-                href="/sales"
-                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-3 py-3 text-center text-sm font-bold text-white shadow-sm active:bg-brand-700 sm:py-4 sm:text-base"
-              >
-                <ShoppingCart className="h-5 w-5 shrink-0" />
-                <span className="break-words">
-                  {t("btn_new_sale")}
-                </span>
-              </Link>
-
-              {isOwner && (
-                <Link
-                  href="/purchases/new"
-                  className="flex min-w-0 w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-white px-3 py-3 text-center text-sm font-bold text-brand-700 active:bg-brand-50 dark:bg-gray-900 dark:text-brand-300 dark:active:bg-gray-800 sm:py-4 sm:text-base"
-                >
-                  <PackagePlus className="h-5 w-5 shrink-0" />
-                  <span className="break-words">
-                    {t("btn_new_purchase")}
-                  </span>
-                </Link>
-              )}
-            </div>
+            {/* الأكثر مبيعًا (للمالك) */}
+            {isOwner && data.topProducts.length > 0 && (
+              <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
+                <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {t("section_top_products")}
+                </h2>
+                <ul className="space-y-3">
+                  {data.topProducts.map((p) => (
+                    <li key={p.name}>
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="min-w-0 truncate font-semibold text-gray-800 dark:text-gray-200">{p.name}</span>
+                        <span className="shrink-0 text-gray-500 dark:text-gray-400">
+                          {p.qty.toLocaleString(locale, { maximumFractionDigits: 2 })} {t("units_suffix")}
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-brand-600 dark:bg-brand-500"
+                          style={{ width: `${topMax > 0 ? Math.max(6, (p.qty / topMax) * 100) : 0}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="min-w-0 rounded-2xl bg-white p-3 shadow-sm dark:bg-gray-900 sm:p-4">
               <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">
@@ -446,6 +533,27 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  const w = 96;
+  const h = 30;
+  const max = Math.max(...values, 1);
+  const pts = values
+    .map((v, i) => `${(i / Math.max(values.length - 1, 1)) * w},${h - 3 - (v / max) * (h - 6)}`)
+    .join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true" className="shrink-0">
+      <polyline
+        points={pts}
+        fill="none"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="stroke-brand-600 dark:stroke-brand-500"
+      />
+    </svg>
   );
 }
 
