@@ -25,12 +25,16 @@ declare
   v_bucket  text;
   v_tpl     text;
   v_storage text;
+  v_is_new  boolean;
 begin
   if p_slug !~ '^[a-z][a-z0-9_]{1,30}$'
      or p_slug in ('public','auth','storage','extensions','graphql','graphql_public',
                    'realtime','vault','pgsodium','supabase_functions','net','cron','platform') then
     raise exception 'slug غير صالح: % (حروف إنجليزي صغيرة وأرقام و _ فقط، يبدأ بحرف)', p_slug;
   end if;
+
+  -- براند جديد = الـ schema بتاعه لسه مش موجود (بنستخدمها للتصنيفات الافتراضية بس)
+  v_is_new := not exists (select 1 from information_schema.schemata where schema_name = p_slug);
 
   insert into platform.stores (slug, name, schema_name, bucket)
   values (p_slug, p_name, p_slug, coalesce(p_bucket, 'assets-' || replace(p_slug, '_', '-')))
@@ -718,6 +722,13 @@ begin
 
   v_tpl := replace(replace(replace(v_tpl, '__S__', p_slug), '__SLUG__', p_slug), '__B__', v_bucket);
   execute v_tpl;
+
+  -- التصنيفات الافتراضية: للبراند الجديد فقط (إعادة تشغيل الدالة مش بترجّع تصنيفات اتمسحت)
+  if v_is_new then
+    execute format(
+      'insert into %I.categories (name) select name from platform.default_categories order by name on conflict (name) do nothing',
+      p_slug);
+  end if;
 
   -- ---------- Storage: bucket مستقل لكل براند ----------
   v_storage := $st$
