@@ -91,3 +91,33 @@ end;
 $$;
 
 revoke all on function platform.add_store_member(text, text, text, text) from public, anon, authenticated;
+
+-- ============================================================
+-- التصنيفات الافتراضية: أي براند جديد بيتبني بيتنسخله التصنيفات دي تلقائيًا.
+-- (بتتنسخ مرة واحدة وقت إنشاء البراند بس، فمش بترجع لو مسحتها بعد كده.)
+-- لتعديل القايمة: عدّل القيم تحت واشغّل الملف تاني (للبراندات الجاية بس).
+-- ============================================================
+create table if not exists platform.default_categories (
+  name text primary key
+);
+alter table platform.default_categories enable row level security;
+revoke all on platform.default_categories from public, anon, authenticated;
+
+insert into platform.default_categories (name) values
+  ('Accessories'),
+  ('Amino acids'),
+  ('Beta-Alanine'),
+  ('Carbohydrates'),
+  ('Creatine'),
+  ('Fat burner'),
+  ('ISO protein'),
+  ('L-Arginine'),
+  ('L-carnitine'),
+  ('L-citrulline'),
+  ('L-Glutamine'),
+  ('Mass gainers'),
+  ('Multivitamins'),
+  ('Omega3'),
+  ('Pre workout'),
+  ('Whey protein')
+on conflict (name) do nothing;
