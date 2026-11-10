@@ -41,3 +41,14 @@ input, select, textarea {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* طباعة: إخفاء شريط التنقل وإجبار خلفية بيضاء (للفاتورة المطبوعة) */
+@media print {
+  nav {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+}
