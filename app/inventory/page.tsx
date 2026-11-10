@@ -8,8 +8,9 @@ import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
 import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package } from "lucide-react";
 
-function ExpiryNote({ expiryDate }: { expiryDate: string | null }) {
-  if (!expiryDate) return null;
+// لا يوجد تنبيه صلاحية لمنتج مخزونه صفر (مفيش حاجة لسه موجودة تنتهي)
+function ExpiryNote({ expiryDate, stock }: { expiryDate: string | null; stock: number }) {
+  if (!expiryDate || Number(stock) <= 0) return null;
   const daysLeft = Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   if (daysLeft > 90) return null;
   return (
@@ -56,7 +57,7 @@ export default function InventoryPage() {
   }
 
   function isExpiringSoon(p: Product): boolean {
-    if (!p.expiry_date) return false;
+    if (!p.expiry_date || Number(p.current_stock) <= 0) return false;
     const daysLeft = Math.ceil((new Date(p.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     return daysLeft <= 90;
   }
@@ -245,7 +246,7 @@ export default function InventoryPage() {
                                 </p>
                                 <StockBadge status={getStockStatus(p)} />
                               </div>
-                              <ExpiryNote expiryDate={p.expiry_date} />
+                              <ExpiryNote expiryDate={p.expiry_date} stock={p.current_stock} />
                             </div>
                           </div>
                           <div className="mt-2 grid grid-cols-2 gap-2 text-center text-xs">
@@ -295,7 +296,7 @@ export default function InventoryPage() {
                       {p.brand || "-"} {p.flavor ? `· ${p.flavor}` : ""} {p.size ? `· ${p.size}` : ""}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{p.categories?.name || "بدون تصنيف"}</p>
-                    <ExpiryNote expiryDate={p.expiry_date} />
+                    <ExpiryNote expiryDate={p.expiry_date} stock={p.current_stock} />
                   </div>
                 </div>
                 <div className="mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 dark:border-gray-800 pt-2 text-center text-xs">
