@@ -17,6 +17,8 @@ import {
   Moon,
   Package,
   Phone,
+  Printer,
+  Share2,
   Sun,
   User,
   Wallet,
@@ -46,6 +48,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     load();
@@ -132,6 +135,57 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     load();
   }
 
+  function flash(msg: string) {
+    setNotice(msg);
+    setTimeout(() => setNotice(""), 3500);
+  }
+
+  function buildInvoiceText(): string {
+    if (!sale) return "";
+    const name = customer?.name || sale.customer_name_snapshot || "عميل نقدي";
+    const lines: string[] = [];
+    lines.push(`🧾 ${brand.name}`);
+    lines.push(`فاتورة رقم #${sale.invoice_number}${sale.status === "cancelled" ? " (ملغاة)" : ""}`);
+    lines.push(`التاريخ: ${formatInvoiceDate(sale.created_at)} - ${formatInvoiceTime(sale.created_at)}`);
+    lines.push(`العميل: ${name}`);
+    lines.push("────────────");
+    for (const it of items) {
+      lines.push(`• ${it.product_name_snapshot}: ${formatQty(it.quantity)} × ${formatEGP(it.unit_price)} = ${formatEGP(it.line_total)}`);
+    }
+    lines.push("────────────");
+    lines.push(`الإجمالي الفرعي: ${formatEGP(sale.subtotal)}`);
+    if (Number(sale.discount) > 0) lines.push(`الخصم: ${formatEGP(sale.discount)}`);
+    lines.push(`الإجمالي: ${formatEGP(sale.total)}`);
+    lines.push(`المدفوع: ${formatEGP(sale.paid_amount)}`);
+    if (Number(sale.remaining_amount) > 0) lines.push(`المتبقي: ${formatEGP(sale.remaining_amount)}`);
+    lines.push("شكرًا لتعاملكم معنا 🙏");
+    return lines.join("\n");
+  }
+
+  async function shareInvoice() {
+    const text = buildInvoiceText();
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: `فاتورة #${sale?.invoice_number}`, text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      flash("تم نسخ الفاتورة، الصقها في واتساب أو أي تطبيق");
+    } catch (e) {
+      if ((e as { name?: string } | null)?.name === "AbortError") return; // المستخدم قفل نافذة المشاركة
+      try {
+        await navigator.clipboard.writeText(text);
+        flash("تم نسخ الفاتورة، الصقها في واتساب أو أي تطبيق");
+      } catch {
+        flash("تعذّرت المشاركة على هذا الجهاز");
+      }
+    }
+  }
+
+  function printInvoice() {
+    window.print();
+  }
+
   if (loading) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">جارِ التحميل...</p>;
   if (!sale) return <p className="p-10 text-center text-sm text-gray-400 dark:text-gray-500">الفاتورة غير موجودة</p>;
 
@@ -141,6 +195,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div>
+      <div className="print:hidden">
       {/* هيدر بنفس تصميم سجل المبيعات */}
       <header className="sticky top-0 z-30 bg-gradient-to-br from-[rgb(var(--brand-dark))] via-brand-600 to-brand-500 px-4 pb-5 pt-4 text-white shadow-md">
         <div className="flex items-center gap-3">
@@ -282,6 +337,29 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
           <Row label="المتبقي" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} bold={remaining > 0} />
         </div>
 
+        {/* مشاركة وطباعة */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={shareInvoice}
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-bold text-white active:opacity-90"
+          >
+            <Share2 className="h-4 w-4" />
+            مشاركة
+          </button>
+          <button
+            onClick={printInvoice}
+            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 active:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+          >
+            <Printer className="h-4 w-4" />
+            طباعة
+          </button>
+        </div>
+        {notice && (
+          <div className="rounded-xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+            {notice}
+          </div>
+        )}
+
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
         {sale.status === "completed" && isOwner && (
@@ -294,6 +372,103 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
           </button>
         )}
       </div>
+      </div>
+
+      <PrintableInvoice
+        sale={sale}
+        items={items}
+        customerName={customerName}
+        phone={customer?.phone ?? null}
+      />
+    </div>
+  );
+}
+
+// نسخة الطباعة: بتظهر عند الطباعة فقط (ألوان ثابتة فاتحة بغض النظر عن الوضع الليلي)
+function PrintableInvoice({
+  sale,
+  items,
+  customerName,
+  phone,
+}: {
+  sale: Sale;
+  items: SaleItem[];
+  customerName: string;
+  phone: string | null;
+}) {
+  const cancelled = sale.status === "cancelled";
+  const remaining = Number(sale.remaining_amount);
+  return (
+    <div dir="rtl" className="hidden bg-white p-4 text-black print:block">
+      <div className="text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={brand.icon192} alt={brand.shortName} className="mx-auto h-14 w-14 rounded-xl object-cover" />
+        <h1 className="mt-1 text-xl font-extrabold">{brand.name}</h1>
+        <p className="text-sm">فاتورة بيع رقم #{sale.invoice_number}</p>
+        {cancelled && <p className="mt-1 text-base font-extrabold">*** فاتورة ملغاة ***</p>}
+      </div>
+
+      <div className="mt-3 space-y-0.5 border-y border-gray-400 py-2 text-xs">
+        <p>العميل: {customerName}</p>
+        {phone && (
+          <p>
+            الهاتف: <span dir="ltr">{phone}</span>
+          </p>
+        )}
+        <p>
+          التاريخ: {formatInvoiceDate(sale.created_at)} - {formatInvoiceTime(sale.created_at)}
+        </p>
+      </div>
+
+      <table className="mt-2 w-full text-xs">
+        <thead>
+          <tr className="border-b border-gray-400 text-start">
+            <th className="py-1 text-start font-bold">الصنف</th>
+            <th className="py-1 text-center font-bold">الكمية</th>
+            <th className="py-1 text-center font-bold">السعر</th>
+            <th className="py-1 text-end font-bold">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((it) => (
+            <tr key={it.id} className="border-b border-gray-200">
+              <td className="py-1 pe-1">{it.product_name_snapshot}</td>
+              <td className="py-1 text-center">{formatQty(it.quantity)}</td>
+              <td className="py-1 text-center">{formatEGP(it.unit_price)}</td>
+              <td className="py-1 text-end font-semibold">{formatEGP(it.line_total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mt-2 space-y-0.5 text-xs">
+        <div className="flex justify-between">
+          <span>الإجمالي الفرعي</span>
+          <span>{formatEGP(sale.subtotal)}</span>
+        </div>
+        {Number(sale.discount) > 0 && (
+          <div className="flex justify-between">
+            <span>الخصم</span>
+            <span>{formatEGP(sale.discount)}</span>
+          </div>
+        )}
+        <div className="flex justify-between border-t border-gray-400 pt-1 text-sm font-extrabold">
+          <span>الإجمالي</span>
+          <span>{formatEGP(sale.total)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>المدفوع</span>
+          <span>{formatEGP(sale.paid_amount)}</span>
+        </div>
+        {remaining > 0 && (
+          <div className="flex justify-between font-bold">
+            <span>المتبقي</span>
+            <span>{formatEGP(remaining)}</span>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-4 text-center text-xs">شكرًا لتعاملكم معنا</p>
     </div>
   );
 }
