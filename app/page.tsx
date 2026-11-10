@@ -128,7 +128,10 @@ export default function DashboardPage() {
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     const expiringProducts = allProducts
       .filter(
-        (p) => p.expiry_date && new Date(p.expiry_date) <= ninetyDaysFromNow
+        (p) =>
+          p.expiry_date &&
+          Number(p.current_stock) > 0 && // المنتج لازم يكون لسه موجود في المخزون
+          new Date(p.expiry_date) <= ninetyDaysFromNow
       )
       .sort(
         (a, b) =>
