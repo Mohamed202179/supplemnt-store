@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { Customer, Sale, Payment, formatEGP, formatDate } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 
@@ -54,6 +56,22 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
     }
 
     setSaving(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.customerPayment(customer.id, value);
+      } catch (e) {
+        setSaving(false);
+        setError(opError(e));
+        return;
+      }
+      setSaving(false);
+      setAmount("");
+      setShowPayment(false);
+      load();
+      return;
+    }
+
     const { error: payErr } = await supabase.from("payments").insert({
       customer_id: customer.id,
       amount: value,

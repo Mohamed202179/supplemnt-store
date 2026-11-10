@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { formatEGP, Customer } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import { useRole } from "@/components/RoleProvider";
@@ -32,6 +34,11 @@ export default function CustomersPage() {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState("");
   const [savingPayment, setSavingPayment] = useState(false);
+
+  // اختصار "عميل جديد" من الداشبورد: /customers?new=1 يفتح نموذج الإضافة
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("new") === "1") setShowForm(true);
+  }, []);
 
   useEffect(() => {
     load();
@@ -116,6 +123,22 @@ export default function CustomersPage() {
     }
 
     setSavingPayment(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.customerPayment(c.id, value);
+      } catch (e) {
+        setSavingPayment(false);
+        setError(opError(e));
+        return;
+      }
+      setSavingPayment(false);
+      setPayingId(null);
+      setPayAmount("");
+      load();
+      return;
+    }
+
     const { error: payErr } = await supabase.from("payments").insert({
       customer_id: c.id,
       amount: value,

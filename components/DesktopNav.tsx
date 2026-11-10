@@ -18,6 +18,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useRole } from "@/components/RoleProvider";
 import { TranslationKey } from "@/lib/i18n";
@@ -53,8 +54,8 @@ export default function DesktopNav() {
     <nav className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white md:block dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto flex max-w-5xl items-center gap-1 overflow-x-auto px-4 py-2">
         <span className="ml-2 flex shrink-0 items-center gap-1.5 text-sm font-bold text-brand-700 dark:text-brand-300">
-          <img src="/icons/icon-192.png" alt="Daily Dose" className="h-6 w-6 rounded-md object-cover" />
-          Daily Dose
+          <img src={brand.icon192} alt={brand.shortName} className="h-6 w-6 rounded-md object-cover" />
+          {brand.shortName}
         </span>
         {visibleItems.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);

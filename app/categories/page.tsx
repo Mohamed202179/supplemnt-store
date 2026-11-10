@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import { Category } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
@@ -71,7 +72,7 @@ async function uploadCategoryImage(
       .slice(2)}.${ext}`;
 
     const { error } = await supabase.storage
-      .from("product-images")
+      .from(brand.imageBucket)
       .upload(path, optimizedFile, {
         upsert: false,
         contentType: optimizedFile.type || file.type,
@@ -80,7 +81,7 @@ async function uploadCategoryImage(
     if (error) return { url: null, failed: true };
 
     const { data } = supabase.storage
-      .from("product-images")
+      .from(brand.imageBucket)
       .getPublicUrl(path);
 
     return { url: data.publicUrl, failed: false };

@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { brand } from "@/lib/brand";
 
 export interface DayPoint {
   label: string;
@@ -36,7 +37,7 @@ export default function SalesChart({ data }: { data: DayPoint[] }) {
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             }}
           />
-          <Bar dataKey="sales" fill="#302cb7" radius={[6, 6, 0, 0]} maxBarSize={18} name="المبيعات" />
+          <Bar dataKey="sales" fill={brand.palette[600]} radius={[6, 6, 0, 0]} maxBarSize={18} name="المبيعات" />
           <Bar dataKey="profit" fill="#f59e0b" radius={[6, 6, 0, 0]} maxBarSize={18} name="الأرباح" />
         </BarChart>
       </ResponsiveContainer>

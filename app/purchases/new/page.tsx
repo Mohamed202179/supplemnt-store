@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { formatEGP, PurchaseCartLine, Supplier, Product, Category } from "@/lib/types";
 import OwnerGate from "@/components/OwnerGate";
 import { PackageSearch, Package, ChevronRight } from "lucide-react";
@@ -77,7 +79,7 @@ function NewPurchasePageContent() {
     [cart]
   );
   const total = Math.max(0, subtotal - Number(discount || 0));
-  const paid = Number(paidAmount || 0);
+  const paid = brand.mode === "v2" && paidAmount.trim() === "" ? total : Number(paidAmount || 0);
   const remaining = Math.max(0, total - paid);
 
   function addToCart(product: Product) {
@@ -172,6 +174,25 @@ function NewPurchasePageContent() {
     }
     if (!selectedSupplier && !noSupplier) {
       setError("اختر موردًا أو تابع بدون مورد");
+      return;
+    }
+
+    if (brand.mode === "v2") {
+      setCompleting(true);
+      try {
+        await ops.createPurchase({
+          supplierId: selectedSupplier?.id ?? null,
+          items: cart.map((l) => ({ product_id: l.product.id, quantity: l.quantity, unit_cost: l.unitCost })),
+          discount: Number(discount) || 0,
+          paid,
+        });
+        setCompleting(false);
+        router.push("/purchases");
+        router.refresh();
+      } catch (e) {
+        setCompleting(false);
+        setError(opError(e));
+      }
       return;
     }
 

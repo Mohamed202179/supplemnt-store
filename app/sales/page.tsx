@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup } from "@/lib/types";
 import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus } from "lucide-react";
 
@@ -123,7 +125,7 @@ export default function SalesPage() {
     [cart]
   );
   const total = Math.max(0, subtotal - Number(discount || 0));
-  const paid = Number(paidAmount || 0);
+  const paid = brand.mode === "v2" && paidAmount.trim() === "" ? total : Number(paidAmount || 0);
   const remaining = Math.max(0, total - paid);
 
   function addToCart(product: Product) {
@@ -227,6 +229,27 @@ export default function SalesPage() {
       return;
     }
     const saleTimestamp = chosenDate.toISOString();
+
+    if (brand.mode === "v2") {
+      setCompleting(true);
+      try {
+        await ops.createSale({
+          customerId: selectedCustomer?.id ?? null,
+          walkInName: walkInName.trim(),
+          items: cart.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
+          discount: Number(discount) || 0,
+          paid,
+          createdAt: saleTimestamp,
+        });
+        setCompleting(false);
+        router.push("/");
+        router.refresh();
+      } catch (e) {
+        setCompleting(false);
+        setError(opError(e));
+      }
+      return;
+    }
 
     setCompleting(true);
 

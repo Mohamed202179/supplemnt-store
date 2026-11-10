@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import { Category, Product, ProductGroup } from "@/lib/types";
 import { Camera } from "lucide-react";
 
@@ -192,7 +193,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
         .slice(2)}.${ext}`;
 
       const { error: uploadErr } = await supabase.storage
-        .from("product-images")
+        .from(brand.imageBucket)
         .upload(path, optimizedFile, {
           upsert: false,
           contentType: optimizedFile.type || imageFile.type,
@@ -203,7 +204,7 @@ export default function ProductForm({ initial, presetGroupId }: Props) {
       }
 
       const { data } = supabase.storage
-        .from("product-images")
+        .from(brand.imageBucket)
         .getPublicUrl(path);
 
       return { url: data.publicUrl, failed: false };

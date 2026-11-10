@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
+import { ops, opError } from "@/lib/ops";
 import { Supplier, Purchase, Payment, formatEGP, formatDate } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
@@ -55,6 +57,22 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
     }
 
     setSaving(true);
+
+    if (brand.mode === "v2") {
+      try {
+        await ops.supplierPayment(supplier.id, value);
+      } catch (e) {
+        setSaving(false);
+        setError(opError(e));
+        return;
+      }
+      setSaving(false);
+      setAmount("");
+      setShowPayment(false);
+      load();
+      return;
+    }
+
     const { error: payErr } = await supabase.from("payments").insert({
       supplier_id: supplier.id,
       amount: value,

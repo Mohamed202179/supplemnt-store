@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { brand } from "@/lib/brand";
 import PageHeader from "@/components/PageHeader";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useRole } from "@/components/RoleProvider";
@@ -58,7 +59,7 @@ export default function SettingsPage() {
     const ext = file.name.split(".").pop();
     const path = `header-${Date.now()}.${ext}`;
 
-    const { error: uploadErr } = await supabase.storage.from("app-assets").upload(path, file, { upsert: false });
+    const { error: uploadErr } = await supabase.storage.from(brand.assetsBucket).upload(path, file, { upsert: false });
 
     if (uploadErr) {
       setUploadingHeader(false);
@@ -66,7 +67,7 @@ export default function SettingsPage() {
       return;
     }
 
-    const { data: urlData } = supabase.storage.from("app-assets").getPublicUrl(path);
+    const { data: urlData } = supabase.storage.from(brand.assetsBucket).getPublicUrl(path);
 
     const { error: updateErr } = await supabase
       .from("app_settings")
@@ -166,8 +167,8 @@ export default function SettingsPage() {
             className="mb-3 h-28 w-full rounded-xl bg-cover bg-center"
             style={{
               backgroundImage: headerImageUrl
-                ? `linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(48,44,183,0.6)), url('${headerImageUrl}')`
-                : "linear-gradient(135deg, #302cb7, #4641d2)",
+                ? `linear-gradient(to bottom, rgba(0,0,0,0.35), rgb(var(--brand-600) / 0.6)), url('${headerImageUrl}')`
+                : "linear-gradient(135deg, rgb(var(--brand-600)), rgb(var(--brand-500)))",
             }}
           />
 
