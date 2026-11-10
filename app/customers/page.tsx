@@ -35,6 +35,11 @@ export default function CustomersPage() {
   const [payAmount, setPayAmount] = useState("");
   const [savingPayment, setSavingPayment] = useState(false);
 
+  // اختصار "عميل جديد" من الداشبورد: /customers?new=1 يفتح نموذج الإضافة
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("new") === "1") setShowForm(true);
+  }, []);
+
   useEffect(() => {
     load();
   }, []);
