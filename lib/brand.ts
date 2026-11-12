@@ -89,7 +89,7 @@ const BRANDS: Record<string, Brand> = {
   },
 };
 
-function resolveBrand(): Brand {
+function resolveBaseBrand(): Brand {
   const key = process.env.NEXT_PUBLIC_BRAND;
   if (!key) return BRANDS.daily_dose;
   const found = BRANDS[key];
@@ -99,6 +99,21 @@ function resolveBrand(): Brand {
     );
   }
   return found;
+}
+
+// اختياري: NEXT_PUBLIC_STORE_SCHEMA بيحوّل أي براند لنظام "v2" على schema مخصص.
+// بنستخدمه لنقل Daily Dose من جداول public القديمة لـ schema مستقل (daily_dose):
+//   - مش موجود  → السلوك الحالي بالظبط (legacy على public).
+//   - موجود     → كل العمليات بتروح لدوال قاعدة البيانات على الـ schema ده.
+// الرجوع للقديم = شيل المتغير وأعد النشر.
+function resolveBrand(): Brand {
+  const base = resolveBaseBrand();
+  const schema = process.env.NEXT_PUBLIC_STORE_SCHEMA;
+  if (!schema) return base;
+  if (!/^[a-z][a-z0-9_]{1,30}$/.test(schema) || schema === "public") {
+    throw new Error(`NEXT_PUBLIC_STORE_SCHEMA="${schema}" غير صالح`);
+  }
+  return { ...base, mode: "v2", schema };
 }
 
 export const brand: Brand = resolveBrand();
