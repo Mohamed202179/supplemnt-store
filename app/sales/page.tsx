@@ -125,7 +125,7 @@ export default function SalesPage() {
     [cart]
   );
   const total = Math.max(0, subtotal - Number(discount || 0));
-  const paid = brand.mode === "v2" && paidAmount.trim() === "" ? total : Number(paidAmount || 0);
+  const paid = Number(paidAmount || 0);
   const remaining = Math.max(0, total - paid);
 
   function addToCart(product: Product) {
