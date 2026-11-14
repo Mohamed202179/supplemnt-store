@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { Sale, SaleItem, Customer, formatEGP, paymentStatusLabel } from "@/lib/types";
+import { Sale, SaleItem, Customer, formatEGP, paymentStatusLabel, paymentMethodLabel } from "@/lib/types";
 import { useRole } from "@/components/RoleProvider";
 import { useTheme } from "@/components/ThemeProvider";
+import { renderInvoiceImage, InvoiceImageData } from "@/lib/invoiceImage";
 import {
   CalendarDays,
   CheckCircle2,
@@ -49,6 +50,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     load();
@@ -148,6 +150,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     lines.push(`فاتورة رقم #${sale.invoice_number}${sale.status === "cancelled" ? " (ملغاة)" : ""}`);
     lines.push(`التاريخ: ${formatInvoiceDate(sale.created_at)} - ${formatInvoiceTime(sale.created_at)}`);
     lines.push(`العميل: ${name}`);
+    if (paymentMethodLabel(sale.payment_method)) lines.push(`طريقة الدفع: ${paymentMethodLabel(sale.payment_method)}`);
     lines.push("────────────");
     for (const it of items) {
       lines.push(`• ${it.product_name_snapshot}: ${formatQty(it.quantity)} × ${formatEGP(it.unit_price)} = ${formatEGP(it.line_total)}`);
@@ -162,7 +165,54 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     return lines.join("\n");
   }
 
-  async function shareInvoice() {
+  // بيانات صورة الفاتورة (بتتبعت للعميل كصورة)
+  function buildImageData(): InvoiceImageData | null {
+    if (!sale) return null;
+    const name = customer?.name || sale.customer_name_snapshot || "عميل نقدي";
+    const remainingAmt = Number(sale.remaining_amount);
+    const rowsBefore = [{ label: "الإجمالي الفرعي", value: formatEGP(sale.subtotal) }];
+    if (Number(sale.discount) > 0) rowsBefore.push({ label: "الخصم", value: `- ${formatEGP(sale.discount)}` });
+    const rowsAfter: { label: string; value: string; danger?: boolean }[] = [
+      { label: "المدفوع", value: formatEGP(sale.paid_amount) },
+    ];
+    if (remainingAmt > 0) rowsAfter.push({ label: "المتبقي", value: formatEGP(remainingAmt), danger: true });
+    const p = brand.palette;
+    return {
+      brandName: brand.name,
+      logoUrl: brand.icon192,
+      palette: { dark: p.dark, c600: p[600], c500: p[500], c100: p[100], c50: p[50] },
+      invoiceNumber: Number(sale.invoice_number).toLocaleString("ar-EG", { useGrouping: false }),
+      dateLabel: formatInvoiceDate(sale.created_at),
+      timeLabel: formatInvoiceTime(sale.created_at),
+      customerName: name,
+      phone: customer?.phone ?? null,
+      paymentMethodLabel: paymentMethodLabel(sale.payment_method),
+      paymentStatusLabel: paymentStatusLabel(sale.payment_status),
+      cancelled: sale.status === "cancelled",
+      items: items.map((it) => ({
+        name: it.product_name_snapshot,
+        qty: formatQty(it.quantity),
+        unit: formatEGP(it.unit_price),
+        total: formatEGP(it.line_total),
+      })),
+      rowsBefore,
+      total: formatEGP(sale.total),
+      rowsAfter,
+    };
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  async function shareText() {
     const text = buildInvoiceText();
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
@@ -172,17 +222,48 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
       await navigator.clipboard.writeText(text);
       flash("تم نسخ الفاتورة، الصقها في واتساب أو أي تطبيق");
     } catch (e) {
-      if ((e as { name?: string } | null)?.name === "AbortError") return; // المستخدم قفل نافذة المشاركة
-      try {
-        await navigator.clipboard.writeText(text);
-        flash("تم نسخ الفاتورة، الصقها في واتساب أو أي تطبيق");
-      } catch {
-        flash("تعذّرت المشاركة على هذا الجهاز");
-      }
+      if ((e as { name?: string } | null)?.name === "AbortError") return;
+      flash("تعذّرت المشاركة على هذا الجهاز");
     }
   }
 
+  // مشاركة الفاتورة كصورة (قايمة المشاركة بتاعة الجهاز: واتساب وغيره)
+  async function shareInvoice(hint?: string) {
+    const data = buildImageData();
+    if (!data || !sale) return;
+    setSharing(true);
+    try {
+      const blob = await renderInvoiceImage(data);
+      const filename = `invoice-${sale.invoice_number}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: `فاتورة #${sale.invoice_number}` });
+        if (hint) flash(hint);
+        return;
+      }
+      // مفيش مشاركة ملفات (غالبًا كمبيوتر): ننزّل الصورة
+      downloadBlob(blob, filename);
+      flash("تم تحميل صورة الفاتورة، أرفقها في واتساب");
+    } catch (e) {
+      if ((e as { name?: string } | null)?.name === "AbortError") return; // المستخدم قفل نافذة المشاركة
+      await shareText(); // لو الصورة فشلت نبعتها كنص بدل ما نوقف
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  // الطباعة: على التطبيق المثبّت على شاشة الآيفون window.print() مش بتشتغل،
+  // فبنفتح قايمة المشاركة بصورة الفاتورة (فيها خيار "طباعة"). في باقي الحالات طباعة عادية.
   function printInvoice() {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (isIOS && standalone) {
+      void shareInvoice("اختر «طباعة» من القائمة");
+      return;
+    }
     window.print();
   }
 
@@ -285,6 +366,12 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
             <Clock className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
             {formatInvoiceTime(sale.created_at)}
           </p>
+          {paymentMethodLabel(sale.payment_method) && (
+            <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+              <Wallet className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
+              طريقة الدفع: {paymentMethodLabel(sale.payment_method)}
+            </p>
+          )}
         </div>
 
         {/* المنتجات */}
@@ -340,15 +427,17 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
         {/* مشاركة وطباعة */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={shareInvoice}
-            className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-bold text-white active:opacity-90"
+            onClick={() => void shareInvoice()}
+            disabled={sharing}
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-bold text-white active:opacity-90 disabled:opacity-60"
           >
             <Share2 className="h-4 w-4" />
-            مشاركة
+            {sharing ? "جارِ التجهيز..." : "مشاركة"}
           </button>
           <button
             onClick={printInvoice}
-            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 active:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            disabled={sharing}
+            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 active:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
             <Printer className="h-4 w-4" />
             طباعة
@@ -418,6 +507,7 @@ function PrintableInvoice({
         <p>
           التاريخ: {formatInvoiceDate(sale.created_at)} - {formatInvoiceTime(sale.created_at)}
         </p>
+        {paymentMethodLabel(sale.payment_method) && <p>طريقة الدفع: {paymentMethodLabel(sale.payment_method)}</p>}
       </div>
 
       <table className="mt-2 w-full text-xs">
