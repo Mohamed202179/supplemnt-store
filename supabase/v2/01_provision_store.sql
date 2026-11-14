@@ -216,6 +216,18 @@ begin
   alter table __S__.products   add column if not exists group_id   uuid references __S__.product_groups(id) on delete set null;
   alter table __S__.payments   add column if not exists supplier_id uuid references __S__.suppliers(id) on delete cascade;
 
+  -- طريقة الدفع للبيع (الفواتير القديمة بتفضل null = غير معروف)
+  alter table __S__.sales add column if not exists payment_method text;
+  do $$
+  begin
+    if not exists (select 1 from pg_constraint
+                   where conname = 'sales_payment_method_check' and conrelid = '__S__.sales'::regclass) then
+      alter table __S__.sales add constraint sales_payment_method_check
+        check (payment_method is null or payment_method in ('cash', 'instapay', 'wallet'));
+    end if;
+  end;
+  $$;
+
   -- ================= INDEXES / TRIGGERS =================
   create index if not exists idx_products_name     on __S__.products using gin (to_tsvector('simple', name));
   create index if not exists idx_products_category on __S__.products(category_id);
@@ -319,13 +331,17 @@ begin
   -- p_items: [{"product_id": "...", "quantity": 2}, ...]
   -- الأسعار والتكلفة بتتاخد من قاعدة البيانات (مش من الواجهة).
   -- p_paid = null → مدفوع بالكامل. لو أكبر من الإجمالي بيتقصّ للإجمالي (الباقي للعميل).
+  -- نمسح النسخة القديمة (بدون طريقة الدفع) علشان ما يحصلش تعارض بين نسختين من الدالة
+  drop function if exists __S__.create_sale(uuid, text, jsonb, numeric, numeric, timestamptz);
+
   create or replace function __S__.create_sale(
-    p_customer_id  uuid,
-    p_walk_in_name text,
-    p_items        jsonb,
-    p_discount     numeric     default 0,
-    p_paid         numeric     default null,
-    p_created_at   timestamptz default null
+    p_customer_id    uuid,
+    p_walk_in_name   text,
+    p_items          jsonb,
+    p_discount       numeric     default 0,
+    p_paid           numeric     default null,
+    p_created_at     timestamptz default null,
+    p_payment_method text        default 'cash'
   ) returns uuid
   language plpgsql security definer
   set search_path = __S__, pg_temp
@@ -355,6 +371,9 @@ begin
     if v_ts > now() + interval '1 minute' then raise exception 'لا يمكن اختيار تاريخ في المستقبل'; end if;
     if v_discount < 0 then raise exception 'الخصم لا يمكن أن يكون سالبًا'; end if;
     if p_paid is not null and p_paid < 0 then raise exception 'المبلغ المدفوع لا يمكن أن يكون سالبًا'; end if;
+    if p_payment_method is not null and p_payment_method not in ('cash', 'instapay', 'wallet') then
+      raise exception 'طريقة دفع غير صحيحة';
+    end if;
 
     -- دمج الأصناف المتكررة + قفل الصفوف بترتيب ثابت (يمنع التعارض بين جهازين)
     for v_agg in
@@ -403,16 +422,15 @@ begin
     if p_customer_id is not null then
       perform 1 from customers where id = p_customer_id for update;
       if not found then raise exception 'العميل غير موجود'; end if;
-    elsif v_remaining > 0 then
-      raise exception 'لا يمكن البيع بالآجل لعميل نقدي — اختر عميلًا مسجلًا أو ادفع المبلغ كاملًا';
     end if;
+    -- البيع الآجل لعميل نقدي (بدون عميل مسجل) مسموح: المتبقي بيتسجل على الفاتورة نفسها بس.
 
     insert into sales (customer_id, customer_name_snapshot, subtotal, discount, total,
-                       paid_amount, remaining_amount, payment_status, profit, created_at)
+                       paid_amount, remaining_amount, payment_status, profit, created_at, payment_method)
     values (p_customer_id,
             case when p_customer_id is null then coalesce(nullif(trim(p_walk_in_name), ''), 'عميل نقدي') end,
             v_subtotal, v_discount, v_total, v_paid, v_remaining, v_status,
-            v_gross - v_discount, v_ts)
+            v_gross - v_discount, v_ts, p_payment_method)
     returning id, invoice_number into v_sale_id, v_invoice;
 
     for v_line in select * from jsonb_array_elements(v_lines) loop
@@ -542,9 +560,8 @@ begin
     if p_supplier_id is not null then
       perform 1 from suppliers where id = p_supplier_id for update;
       if not found then raise exception 'المورد غير موجود'; end if;
-    elsif v_remaining > 0 then
-      raise exception 'لا يمكن الشراء بالآجل بدون مورد — اختر موردًا أو ادفع المبلغ كاملًا';
     end if;
+    -- الشراء الآجل بدون مورد مسجل مسموح: المتبقي بيتسجل على الفاتورة نفسها بس.
 
     insert into purchases (supplier_id, supplier_name_snapshot, subtotal, discount, total,
                            paid_amount, remaining_amount, payment_status)
