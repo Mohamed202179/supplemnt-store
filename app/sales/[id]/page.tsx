@@ -52,6 +52,8 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const [notice, setNotice] = useState("");
   const [sharing, setSharing] = useState(false);
   const imageRef = useRef<File | null>(null); // الصورة المجهّزة مسبقًا للمشاركة
+  const [imageState, setImageState] = useState<"preparing" | "ready" | "failed">("preparing");
+  const [imageErr, setImageErr] = useState("");
 
   useEffect(() => {
     load();
@@ -138,9 +140,9 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     load();
   }
 
-  function flash(msg: string) {
+  function flash(msg: string, ms = 3500) {
     setNotice(msg);
-    setTimeout(() => setNotice(""), 3500);
+    setTimeout(() => setNotice(""), ms);
   }
 
   function buildInvoiceText(): string {
@@ -233,6 +235,10 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   async function shareInvoice(hint?: string) {
     if (!sale) return;
     let file = imageRef.current;
+    if (!file && imageState === "preparing") {
+      flash("جارِ تجهيز الصورة… اضغط مرة أخرى بعد ثانية");
+      return;
+    }
     try {
       if (!file) {
         setSharing(true);
@@ -251,9 +257,11 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
       downloadBlob(file, file.name);
       flash("تم تحميل صورة الفاتورة، أرفقها في واتساب");
     } catch (e) {
-      const name = (e as { name?: string } | null)?.name;
-      if (name === "AbortError") return; // المستخدم قفل نافذة المشاركة
-      flash(`تعذّر إرسال الصورة (${name || "خطأ"}) — اتبعتت كنص`);
+      const err = e as { name?: string; message?: string } | null;
+      if (err?.name === "AbortError") return; // المستخدم قفل نافذة المشاركة
+      setImageErr(`${err?.name || "Error"}: ${err?.message || ""}`);
+      setImageState("failed");
+      flash("تعذّر إرسال الصورة — اتبعتت كنص", 15000);
       await shareText(); // لو الصورة فشلت نبعتها كنص بدل ما نوقف
     } finally {
       setSharing(false);
@@ -265,14 +273,21 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     if (loading || !sale) return;
     let cancelled = false;
     imageRef.current = null;
+    setImageState("preparing");
+    setImageErr("");
     const data = buildImageData();
     if (!data) return;
     renderInvoiceImage(data)
       .then((blob) => {
-        if (!cancelled) imageRef.current = new File([blob], `invoice-${sale.invoice_number}.png`, { type: "image/png" });
+        if (cancelled) return;
+        imageRef.current = new File([blob], `invoice-${sale.invoice_number}.png`, { type: "image/png" });
+        setImageState("ready");
       })
-      .catch(() => {
-        /* لو فشل هنجرّب تاني وقت الضغط */
+      .catch((e) => {
+        if (cancelled) return;
+        const err = e as { name?: string; message?: string } | null;
+        setImageErr(`${err?.name || "Error"}: ${err?.message || ""}`);
+        setImageState("failed");
       });
     return () => {
       cancelled = true;
@@ -475,6 +490,14 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
           <div className="rounded-xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             {notice}
           </div>
+        )}
+        {imageState === "preparing" && (
+          <p className="text-center text-[11px] text-gray-400 dark:text-gray-500">جارِ تجهيز صورة الفاتورة…</p>
+        )}
+        {imageState === "failed" && (
+          <p className="break-words text-center text-[11px] text-amber-700 dark:text-amber-300">
+            تعذّر تجهيز الصورة: <span dir="ltr">{imageErr}</span>
+          </p>
         )}
 
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
