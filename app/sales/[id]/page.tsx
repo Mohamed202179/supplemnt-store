@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
@@ -51,6 +51,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sharing, setSharing] = useState(false);
+  const imageRef = useRef<File | null>(null); // الصورة المجهّزة مسبقًا للمشاركة
 
   useEffect(() => {
     load();
@@ -227,30 +228,57 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     }
   }
 
-  // مشاركة الفاتورة كصورة (قايمة المشاركة بتاعة الجهاز: واتساب وغيره)
+  // مشاركة الفاتورة كصورة (قايمة المشاركة بتاعة الجهاز: واتساب وغيره).
+  // الصورة بتتجهّز مسبقًا أول ما الصفحة تفتح، لأن سفاري على الآيفون بيرفض المشاركة لو اتأخرنا بعد الضغطة.
   async function shareInvoice(hint?: string) {
-    const data = buildImageData();
-    if (!data || !sale) return;
-    setSharing(true);
+    if (!sale) return;
+    let file = imageRef.current;
     try {
-      const blob = await renderInvoiceImage(data);
-      const filename = `invoice-${sale.invoice_number}.png`;
-      const file = new File([blob], filename, { type: "image/png" });
+      if (!file) {
+        setSharing(true);
+        const data = buildImageData();
+        if (!data) return;
+        const blob = await renderInvoiceImage(data);
+        file = new File([blob], `invoice-${sale.invoice_number}.png`, { type: "image/png" });
+        imageRef.current = file;
+      }
       if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: `فاتورة #${sale.invoice_number}` });
         if (hint) flash(hint);
         return;
       }
       // مفيش مشاركة ملفات (غالبًا كمبيوتر): ننزّل الصورة
-      downloadBlob(blob, filename);
+      downloadBlob(file, file.name);
       flash("تم تحميل صورة الفاتورة، أرفقها في واتساب");
     } catch (e) {
-      if ((e as { name?: string } | null)?.name === "AbortError") return; // المستخدم قفل نافذة المشاركة
+      const name = (e as { name?: string } | null)?.name;
+      if (name === "AbortError") return; // المستخدم قفل نافذة المشاركة
+      flash(`تعذّر إرسال الصورة (${name || "خطأ"}) — اتبعتت كنص`);
       await shareText(); // لو الصورة فشلت نبعتها كنص بدل ما نوقف
     } finally {
       setSharing(false);
     }
   }
+
+  // تجهيز الصورة في الخلفية أول ما بيانات الفاتورة تحمّل
+  useEffect(() => {
+    if (loading || !sale) return;
+    let cancelled = false;
+    imageRef.current = null;
+    const data = buildImageData();
+    if (!data) return;
+    renderInvoiceImage(data)
+      .then((blob) => {
+        if (!cancelled) imageRef.current = new File([blob], `invoice-${sale.invoice_number}.png`, { type: "image/png" });
+      })
+      .catch(() => {
+        /* لو فشل هنجرّب تاني وقت الضغط */
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, sale, items, customer]);
 
   // الطباعة: على التطبيق المثبّت على شاشة الآيفون window.print() مش بتشتغل،
   // فبنفتح قايمة المشاركة بصورة الفاتورة (فيها خيار "طباعة"). في باقي الحالات طباعة عادية.
