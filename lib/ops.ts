@@ -25,6 +25,7 @@ export const ops = {
     discount: number;
     paid: number;
     createdAt: string;
+    paymentMethod?: string;
   }) =>
     rpc<string>("create_sale", {
       p_customer_id: a.customerId,
@@ -33,6 +34,7 @@ export const ops = {
       p_discount: a.discount,
       p_paid: a.paid,
       p_created_at: a.createdAt,
+      p_payment_method: a.paymentMethod ?? "cash",
     }),
 
   cancelSale: (saleId: string) => rpc("cancel_sale", { p_sale_id: saleId }),
