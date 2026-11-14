@@ -6,8 +6,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup } from "@/lib/types";
-import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus } from "lucide-react";
+import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup, PAYMENT_METHODS, PaymentMethod } from "@/lib/types";
+import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus, Banknote, Zap, Smartphone } from "lucide-react";
 
 type Step = "customer" | "products" | "cart";
 
@@ -44,6 +44,7 @@ export default function SalesPage() {
 
   const [discount, setDiscount] = useState("0");
   const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [saleDate, setSaleDate] = useState(() => toLocalDatetimeInputValue(new Date()));
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState("");
@@ -240,6 +241,7 @@ export default function SalesPage() {
           discount: Number(discount) || 0,
           paid,
           createdAt: saleTimestamp,
+          paymentMethod,
         });
         setCompleting(false);
         router.push("/");
@@ -666,6 +668,35 @@ export default function SalesPage() {
             </label>
             <Row label="المتبقي (دين)" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} />
           </div>
+
+          {/* طريقة الدفع (بتتسجل في البراندات الجديدة) */}
+          {brand.mode === "v2" && (
+            <div className="space-y-2 rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
+              <p className="text-sm text-gray-500 dark:text-gray-400">طريقة الدفع</p>
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_METHODS.map((m) => {
+                  const active = paymentMethod === m.value;
+                  const Icon = m.value === "cash" ? Banknote : m.value === "instapay" ? Zap : Smartphone;
+                  return (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.value)}
+                      aria-pressed={active}
+                      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border-2 px-1 py-3 text-xs font-bold ${
+                        active
+                          ? "border-brand-600 bg-brand-600 text-white"
+                          : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      <span className="max-w-full truncate">{m.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
