@@ -65,6 +65,17 @@ export interface Supplier {
 }
 
 export type PaymentStatus = "paid" | "partial" | "unpaid";
+
+// طريقة الدفع (بتتسجل على فواتير البيع في البراندات من نوع v2)
+export type PaymentMethod = "cash" | "instapay" | "wallet";
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: "cash", label: "كاش" },
+  { value: "instapay", label: "إنستا باي" },
+  { value: "wallet", label: "محفظة إلكترونية" },
+];
+export function paymentMethodLabel(m: string | null | undefined): string | null {
+  return PAYMENT_METHODS.find((p) => p.value === m)?.label ?? null;
+}
 export type SaleStatus = "completed" | "cancelled";
 
 export interface Sale {
@@ -82,6 +93,7 @@ export interface Sale {
   profit: number;
   created_at: string;
   cancelled_at: string | null;
+  payment_method?: PaymentMethod | null;
   customers?: { name: string } | null;
 }
 
