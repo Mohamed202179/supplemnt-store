@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
 import { formatEGP, getStockStatus, CartLine, Customer, Product, ProductGroup, PAYMENT_METHODS, PaymentMethod } from "@/lib/types";
-import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus, Banknote, Zap, Smartphone } from "lucide-react";
+import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package, User, UserPlus } from "lucide-react";
+import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 
 type Step = "customer" | "products" | "cart";
 
@@ -676,7 +677,6 @@ export default function SalesPage() {
               <div className="grid grid-cols-3 gap-2">
                 {PAYMENT_METHODS.map((m) => {
                   const active = paymentMethod === m.value;
-                  const Icon = m.value === "cash" ? Banknote : m.value === "instapay" ? Zap : Smartphone;
                   return (
                     <button
                       key={m.value}
@@ -689,7 +689,7 @@ export default function SalesPage() {
                           : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
                       }`}
                     >
-                      <Icon className="h-5 w-5 shrink-0" />
+                      <PaymentMethodIcon method={m.value} className="h-8 w-8" />
                       <span className="max-w-full truncate">{m.label}</span>
                     </button>
                   );
