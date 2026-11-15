@@ -28,6 +28,8 @@ export interface InvoiceImageData {
   customerName: string;
   phone: string | null;
   paymentMethodLabel: string | null;
+  paymentMethodKey?: string | null; // cash | instapay | wallet
+  paymentLogoUrl?: string | null; // لوجو إنستا باي / فودافون كاش
   paymentStatusLabel: string;
   cancelled: boolean;
   items: { name: string; qty: string; unit: string; total: string }[];
@@ -94,7 +96,14 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
 }
 
 /** بيرسم الفاتورة. draw=false بيحسب الارتفاع بس (من غير رسم). بيرجّع الارتفاع الكلي. */
-function paint(ctx: Ctx, d: InvoiceImageData, family: string, logo: HTMLImageElement | null, draw: boolean): number {
+function paint(
+  ctx: Ctx,
+  d: InvoiceImageData,
+  family: string,
+  logo: HTMLImageElement | null,
+  payLogo: HTMLImageElement | null,
+  draw: boolean
+): number {
   const R = W - P;
   const font = (weight: number, size: number) => `${weight} ${size}px ${family}`;
   ctx.direction = "rtl";
@@ -161,25 +170,52 @@ function paint(ctx: Ctx, d: InvoiceImageData, family: string, logo: HTMLImageEle
   let y = HEADER_H + 40;
 
   // ---------- بيانات العميل ----------
-  const info: [string, string][] = [["العميل", d.customerName]];
+  const info: [string, string, string?][] = [["العميل", d.customerName]];
   if (d.phone) info.push(["الهاتف", d.phone]);
   info.push(["التاريخ", d.dateLabel], ["الوقت", d.timeLabel]);
-  if (d.paymentMethodLabel) info.push(["طريقة الدفع", d.paymentMethodLabel]);
+  if (d.paymentMethodLabel) info.push(["طريقة الدفع", d.paymentMethodLabel, "pay"]);
   info.push(["حالة الدفع", d.paymentStatusLabel]);
   const infoH = 36 + info.length * 54;
   if (draw) {
     ctx.fillStyle = d.palette.c50;
     roundRect(ctx, P, y, W - 2 * P, infoH, 28);
     ctx.fill();
-    info.forEach(([label, value], i) => {
+    info.forEach(([label, value, kind], i) => {
       const by = y + 30 + 36 + i * 54 - 10;
       ctx.textAlign = "right";
       ctx.fillStyle = GRAY;
       ctx.font = font(600, 26);
       ctx.fillText(label, R - 30, by);
+      let vx = R - 30 - 210;
+      if (kind === "pay") {
+        const S = 40;
+        if (payLogo) {
+          ctx.save();
+          roundRect(ctx, vx - S, by - 31, S, S, 9);
+          ctx.clip();
+          ctx.drawImage(payLogo, vx - S, by - 31, S, S);
+          ctx.restore();
+          // إطار خفيف علشان لوجو إنستا باي الأبيض يبان على الخلفية الفاتحة
+          ctx.strokeStyle = "#cfd8c4";
+          ctx.lineWidth = 2;
+          roundRect(ctx, vx - S, by - 31, S, S, 9);
+          ctx.stroke();
+          vx -= S + 14;
+        } else if (d.paymentMethodKey === "cash") {
+          // أيقونة كاش بسيطة (ورقة فلوس)
+          ctx.strokeStyle = d.palette.c600;
+          ctx.lineWidth = 3.5;
+          roundRect(ctx, vx - S, by - 26, S, 28, 6);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(vx - S / 2, by - 12, 6, 0, Math.PI * 2);
+          ctx.stroke();
+          vx -= S + 14;
+        }
+      }
       ctx.fillStyle = INK;
       ctx.font = font(700, 28);
-      ctx.fillText(value, R - 30 - 210, by);
+      ctx.fillText(value, vx, by);
     });
   }
   y += infoH + 36;
@@ -330,14 +366,14 @@ export async function renderInvoiceImage(d: InvoiceImageData): Promise<Blob> {
   } catch {
     /* بنكمل بأي خط متاح */
   }
-  const logo = await loadImage(d.logoUrl);
+  const [logo, payLogo] = await Promise.all([loadImage(d.logoUrl), d.paymentLogoUrl ? loadImage(d.paymentLogoUrl) : Promise.resolve(null)]);
 
   const scratch = document.createElement("canvas");
   scratch.width = W;
   scratch.height = 10;
   const mctx = scratch.getContext("2d");
   if (!mctx) throw new Error("canvas unsupported");
-  const H = Math.ceil(paint(mctx, d, family, logo, false));
+  const H = Math.ceil(paint(mctx, d, family, logo, payLogo, false));
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -346,7 +382,7 @@ export async function renderInvoiceImage(d: InvoiceImageData): Promise<Blob> {
   if (!ctx) throw new Error("canvas unsupported");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
-  paint(ctx, d, family, logo, true);
+  paint(ctx, d, family, logo, payLogo, true);
   if (d.cancelled) paintStamp(ctx, family, H);
 
   return new Promise<Blob>((resolve, reject) => {
