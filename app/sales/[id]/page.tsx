@@ -8,6 +8,7 @@ import { ops, opError } from "@/lib/ops";
 import { Sale, SaleItem, Customer, formatEGP, paymentStatusLabel, paymentMethodLabel } from "@/lib/types";
 import { useRole } from "@/components/RoleProvider";
 import { useTheme } from "@/components/ThemeProvider";
+import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 import { renderInvoiceImage, InvoiceImageData } from "@/lib/invoiceImage";
 import {
   CalendarDays,
@@ -190,6 +191,9 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
       customerName: name,
       phone: customer?.phone ?? null,
       paymentMethodLabel: paymentMethodLabel(sale.payment_method),
+      paymentMethodKey: sale.payment_method ?? null,
+      paymentLogoUrl:
+        sale.payment_method === "instapay" || sale.payment_method === "wallet" ? `/payment/${sale.payment_method}.png` : null,
       paymentStatusLabel: paymentStatusLabel(sale.payment_status),
       cancelled: sale.status === "cancelled",
       items: items.map((it) => ({
@@ -411,7 +415,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
           </p>
           {paymentMethodLabel(sale.payment_method) && (
             <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-              <Wallet className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
+              <PaymentMethodIcon method={sale.payment_method} className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               طريقة الدفع: {paymentMethodLabel(sale.payment_method)}
             </p>
           )}
