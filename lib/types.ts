@@ -71,7 +71,7 @@ export type PaymentMethod = "cash" | "instapay" | "wallet";
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "كاش" },
   { value: "instapay", label: "إنستا باي" },
-  { value: "wallet", label: "محفظة إلكترونية" },
+  { value: "wallet", label: "فودافون كاش" },
 ];
 export function paymentMethodLabel(m: string | null | undefined): string | null {
   return PAYMENT_METHODS.find((p) => p.value === m)?.label ?? null;
