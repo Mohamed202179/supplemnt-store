@@ -25,7 +25,7 @@ export const ops = {
     discount: number;
     paid: number;
     createdAt: string;
-    paymentMethod?: string;
+    paymentMethod?: string | null;
   }) =>
     rpc<string>("create_sale", {
       p_customer_id: a.customerId,
@@ -34,7 +34,7 @@ export const ops = {
       p_discount: a.discount,
       p_paid: a.paid,
       p_created_at: a.createdAt,
-      p_payment_method: a.paymentMethod ?? "cash",
+      p_payment_method: a.paymentMethod ?? null,
     }),
 
   cancelSale: (saleId: string) => rpc("cancel_sale", { p_sale_id: saleId }),
@@ -65,8 +65,8 @@ export const ops = {
   adjustStock: (productId: string, target: number, reason: string | null) =>
     rpc("adjust_stock", { p_product_id: productId, p_target: target, p_reason: reason }),
 
-  customerPayment: (customerId: string, amount: number, note: string | null = null) =>
-    rpc("record_customer_payment", { p_customer_id: customerId, p_amount: amount, p_note: note }),
+  customerPayment: (customerId: string, amount: number, note: string | null = null, method: string | null = null) =>
+    rpc("record_customer_payment", { p_customer_id: customerId, p_amount: amount, p_note: note, p_method: method }),
 
   supplierPayment: (supplierId: string, amount: number, note: string | null = null) =>
     rpc("record_supplier_payment", { p_supplier_id: supplierId, p_amount: amount, p_note: note }),

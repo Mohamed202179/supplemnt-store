@@ -143,6 +143,7 @@ export interface Payment {
   sale_id: string | null;
   amount: number;
   note: string | null;
+  payment_method?: PaymentMethod | null;
   created_at: string;
 }
 
