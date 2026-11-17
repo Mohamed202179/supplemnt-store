@@ -5,7 +5,18 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { Sale, SaleItem, Customer, formatEGP, paymentStatusLabel, paymentMethodLabel } from "@/lib/types";
+import {
+  Sale,
+  SaleItem,
+  SaleReturn,
+  SaleReturnItem,
+  Customer,
+  PAYMENT_METHODS,
+  PaymentMethod,
+  formatEGP,
+  paymentStatusLabel,
+  paymentMethodLabel,
+} from "@/lib/types";
 import { useRole } from "@/components/RoleProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import PaymentMethodIcon from "@/components/PaymentMethodIcon";
@@ -20,6 +31,7 @@ import {
   Package,
   Phone,
   Printer,
+  RotateCcw,
   Share2,
   Sun,
   User,
@@ -49,6 +61,13 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [returns, setReturns] = useState<SaleReturn[]>([]);
+  const [returnItems, setReturnItems] = useState<SaleReturnItem[]>([]);
+  const [showReturn, setShowReturn] = useState(false);
+  const [retQty, setRetQty] = useState<Record<string, number>>({});
+  const [retNote, setRetNote] = useState("");
+  const [retMethod, setRetMethod] = useState<PaymentMethod>("cash");
+  const [returning, setReturning] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sharing, setSharing] = useState(false);
@@ -69,6 +88,18 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     setSale((s as Sale) ?? null);
     setItems((it ?? []) as SaleItem[]);
 
+    if (brand.mode === "v2") {
+      const { data: rs } = await supabase.from("sale_returns").select("*").eq("sale_id", params.id).order("created_at");
+      const list = (rs ?? []) as SaleReturn[];
+      setReturns(list);
+      if (list.length > 0) {
+        const { data: ri } = await supabase.from("sale_return_items").select("*").in("return_id", list.map((r) => r.id));
+        setReturnItems((ri ?? []) as SaleReturnItem[]);
+      } else {
+        setReturnItems([]);
+      }
+    }
+
     if (s?.customer_id) {
       const { data: c } = await supabase.from("customers").select("*").eq("id", s.customer_id).single();
       setCustomer((c as Customer) ?? null);
@@ -76,6 +107,72 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
       setCustomer(null);
     }
     setLoading(false);
+  }
+
+  // ----- المرتجعات: إجماليات وحسابات -----
+  const retNet = returns.reduce((sum, r) => sum + Number(r.net_value), 0);
+  const retDebt = returns.reduce((sum, r) => sum + Number(r.debt_reduction), 0);
+  const retRefund = returns.reduce((sum, r) => sum + Number(r.refund_amount), 0);
+  const returnedByItem = new Map<string, number>();
+  for (const ri of returnItems) {
+    if (ri.sale_item_id) returnedByItem.set(ri.sale_item_id, (returnedByItem.get(ri.sale_item_id) ?? 0) + Number(ri.quantity));
+  }
+  const returnableQty = (it: SaleItem) => Number(it.quantity) - (returnedByItem.get(it.id) ?? 0);
+  const hasReturnable = items.some((it) => returnableQty(it) > 0);
+  const fullyReturned = items.length > 0 && !hasReturnable;
+  const remainingAfter = sale ? Math.max(0, Number(sale.remaining_amount) - retDebt) : 0;
+
+  // معاينة المرتجع (نفس معادلة قاعدة البيانات)
+  function previewReturn() {
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    let itemsValue = 0;
+    let count = 0;
+    for (const it of items) {
+      const q = retQty[it.id] ?? 0;
+      if (q > 0) {
+        itemsValue += Number(it.unit_price) * q;
+        count += 1;
+      }
+    }
+    if (!sale) return { itemsValue, net: 0, debtRed: 0, refund: 0, count };
+    const disc = Number(sale.subtotal) > 0 ? round2((Number(sale.discount) * itemsValue) / Number(sale.subtotal)) : 0;
+    const net = Math.max(0, Math.min(itemsValue - disc, Number(sale.total) - retNet));
+    const debtRed = Math.min(net, remainingAfter);
+    return { itemsValue, net, debtRed, refund: net - debtRed, count };
+  }
+
+  function changeRetQty(it: SaleItem, delta: number) {
+    setRetQty((prev) => {
+      const cur = prev[it.id] ?? 0;
+      const next = Math.max(0, Math.min(returnableQty(it), cur + delta));
+      return { ...prev, [it.id]: next };
+    });
+  }
+
+  async function submitReturn() {
+    if (!sale) return;
+    const lines = items
+      .filter((it) => (retQty[it.id] ?? 0) > 0)
+      .map((it) => ({ sale_item_id: it.id, quantity: retQty[it.id] }));
+    if (lines.length === 0) {
+      setError("اختر صنفًا وكمية للمرتجع");
+      return;
+    }
+    const pv = previewReturn();
+    if (!confirm("تأكيد المرتجع؟ هيرجع المخزون ويتعدل حساب العميل.")) return;
+    setError("");
+    setReturning(true);
+    try {
+      await ops.createSaleReturn(sale.id, lines, retNote.trim() || null, pv.refund > 0 ? retMethod : null);
+      setShowReturn(false);
+      setRetQty({});
+      setRetNote("");
+      flash("تم تسجيل المرتجع");
+      await load();
+    } catch (e) {
+      setError(opError(e));
+    }
+    setReturning(false);
   }
 
   async function cancelSale() {
@@ -164,7 +261,8 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
     if (Number(sale.discount) > 0) lines.push(`الخصم: ${formatEGP(sale.discount)}`);
     lines.push(`الإجمالي: ${formatEGP(sale.total)}`);
     lines.push(`المدفوع: ${formatEGP(sale.paid_amount)}`);
-    if (Number(sale.remaining_amount) > 0) lines.push(`المتبقي: ${formatEGP(sale.remaining_amount)}`);
+    if (retNet > 0) lines.push(`المرتجع: - ${formatEGP(retNet)}`);
+    if (remainingAfter > 0) lines.push(`المتبقي: ${formatEGP(remainingAfter)}`);
     lines.push("شكرًا لتعاملكم معنا 🙏");
     return lines.join("\n");
   }
@@ -173,12 +271,16 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
   function buildImageData(): InvoiceImageData | null {
     if (!sale) return null;
     const name = customer?.name || sale.customer_name_snapshot || "عميل نقدي";
-    const remainingAmt = Number(sale.remaining_amount);
+    const remainingAmt = Math.max(0, Number(sale.remaining_amount) - retDebt);
     const rowsBefore = [{ label: "الإجمالي الفرعي", value: formatEGP(sale.subtotal) }];
     if (Number(sale.discount) > 0) rowsBefore.push({ label: "الخصم", value: `- ${formatEGP(sale.discount)}` });
     const rowsAfter: { label: string; value: string; danger?: boolean }[] = [
       { label: "المدفوع", value: formatEGP(sale.paid_amount) },
     ];
+    if (retNet > 0) {
+      rowsAfter.push({ label: "المرتجع", value: `- ${formatEGP(retNet)}` });
+      rowsAfter.push({ label: "الصافي بعد المرتجع", value: formatEGP(Number(sale.total) - retNet) });
+    }
     if (remainingAmt > 0) rowsAfter.push({ label: "المتبقي", value: formatEGP(remainingAmt), danger: true });
     const p = brand.palette;
     return {
@@ -297,7 +399,7 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, sale, items, customer]);
+  }, [loading, sale, items, customer, returns]);
 
   // الطباعة: على التطبيق المثبّت على شاشة الآيفون window.print() مش بتشتغل،
   // فبنفتح قايمة المشاركة بصورة الفاتورة (فيها خيار "طباعة"). في باقي الحالات طباعة عادية.
@@ -319,7 +421,8 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
 
   const cancelled = sale.status === "cancelled";
   const customerName = customer?.name || sale.customer_name_snapshot || "عميل نقدي";
-  const remaining = Number(sale.remaining_amount);
+  const remaining = remainingAfter;
+  const pv = previewReturn();
 
   return (
     <div>
@@ -385,6 +488,12 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
             <Wallet className="h-3.5 w-3.5" />
             {paymentStatusLabel(sale.payment_status)}
           </span>
+          {returns.length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+              <RotateCcw className="h-3.5 w-3.5" />
+              {fullyReturned ? "مرتجع كامل" : "مرتجع جزئي"}
+            </span>
+          )}
         </div>
 
         {cancelled && (
@@ -468,8 +577,164 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
           <Row label="الإجمالي الفرعي" value={formatEGP(sale.subtotal)} />
           <Row label="الخصم" value={formatEGP(sale.discount)} />
           <Row label="المدفوع" value={formatEGP(sale.paid_amount)} />
+          {retNet > 0 && <Row label="المرتجع" value={`- ${formatEGP(retNet)}`} />}
+          {retNet > 0 && <Row label="الصافي بعد المرتجع" value={formatEGP(Number(sale.total) - retNet)} bold />}
+          {retRefund > 0 && <Row label="تم رده للعميل" value={formatEGP(retRefund)} />}
           <Row label="المتبقي" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} bold={remaining > 0} />
         </div>
+
+        {/* سجل المرتجعات */}
+        {returns.length > 0 && (
+          <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <p className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+              <RotateCcw className="h-4 w-4" />
+              المرتجعات ({returns.length.toLocaleString("ar-EG")})
+            </p>
+            {returns.map((r) => (
+              <div key={r.id} className="rounded-xl bg-white p-2.5 text-xs dark:bg-gray-900">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {formatInvoiceDate(r.created_at)} · {formatInvoiceTime(r.created_at)}
+                </p>
+                <ul className="my-1 space-y-0.5">
+                  {returnItems
+                    .filter((ri) => ri.return_id === r.id)
+                    .map((ri) => (
+                      <li key={ri.id} className="flex justify-between gap-2">
+                        <span className="min-w-0 truncate text-gray-800 dark:text-gray-200">
+                          {ri.product_name_snapshot} × {formatQty(ri.quantity)}
+                        </span>
+                        <span className="shrink-0 font-semibold">{formatEGP(ri.line_total)}</span>
+                      </li>
+                    ))}
+                </ul>
+                <p className="font-bold text-gray-900 dark:text-gray-100">صافي المرتجع: {formatEGP(r.net_value)}</p>
+                {Number(r.debt_reduction) > 0 && (
+                  <p className="text-gray-600 dark:text-gray-300">اتخصم من الدين: {formatEGP(r.debt_reduction)}</p>
+                )}
+                {Number(r.refund_amount) > 0 && (
+                  <p className="text-gray-600 dark:text-gray-300">
+                    اتردّ للعميل: {formatEGP(r.refund_amount)}
+                    {paymentMethodLabel(r.refund_method) ? ` (${paymentMethodLabel(r.refund_method)})` : ""}
+                  </p>
+                )}
+                {r.note && <p className="text-gray-500 dark:text-gray-400">ملاحظة: {r.note}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* مرتجع جزئي (المالك فقط، في البراندات الجديدة) */}
+        {brand.mode === "v2" && isOwner && sale.status === "completed" && hasReturnable && (
+          <>
+            {!showReturn ? (
+              <button
+                onClick={() => setShowReturn(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 py-3 text-sm font-bold text-amber-800 active:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300"
+              >
+                <RotateCcw className="h-4 w-4" />
+                مرتجع جزئي
+              </button>
+            ) : (
+              <div className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-500/40 dark:bg-amber-500/10">
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">مرتجع جزئي</p>
+                <ul className="space-y-2">
+                  {items
+                    .filter((it) => returnableQty(it) > 0)
+                    .map((it) => (
+                      <li key={it.id} className="flex items-center justify-between gap-2 rounded-xl bg-white p-2.5 text-sm dark:bg-gray-900">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-900 dark:text-gray-100">{it.product_name_snapshot}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            متاح للإرجاع {formatQty(returnableQty(it))} × {formatEGP(it.unit_price)}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => changeRetQty(it, -1)}
+                            className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                            aria-label="تقليل"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center font-bold">{formatQty(retQty[it.id] ?? 0)}</span>
+                          <button
+                            type="button"
+                            onClick={() => changeRetQty(it, 1)}
+                            className="h-8 w-8 rounded-lg bg-gray-100 text-lg font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                            aria-label="زيادة"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+
+                {pv.count > 0 && (
+                  <div className="space-y-1 rounded-xl bg-white p-3 text-sm dark:bg-gray-900">
+                    <Row label="صافي المرتجع" value={formatEGP(pv.net)} bold />
+                    {pv.debtRed > 0 && <Row label="يتخصم من الدين" value={formatEGP(pv.debtRed)} />}
+                    {pv.refund > 0 && <Row label="يتردّ للعميل" value={formatEGP(pv.refund)} />}
+                  </div>
+                )}
+
+                {pv.refund > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-gray-600 dark:text-gray-300">طريقة رد المبلغ</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {PAYMENT_METHODS.map((m) => {
+                        const active = retMethod === m.value;
+                        return (
+                          <button
+                            key={m.value}
+                            type="button"
+                            onClick={() => setRetMethod(m.value)}
+                            aria-pressed={active}
+                            className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border-2 px-1 py-2 text-[11px] font-bold ${
+                              active
+                                ? "border-brand-600 bg-brand-600 text-white"
+                                : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                            }`}
+                          >
+                            <PaymentMethodIcon method={m.value} className="h-6 w-6" />
+                            <span className="max-w-full truncate">{m.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  value={retNote}
+                  onChange={(e) => setRetNote(e.target.value)}
+                  placeholder="ملاحظة (اختياري)"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => void submitReturn()}
+                    disabled={returning || pv.count === 0}
+                    className="rounded-xl bg-amber-600 py-3 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    {returning ? "جارِ الحفظ..." : "تأكيد المرتجع"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowReturn(false);
+                      setRetQty({});
+                    }}
+                    className="rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* مشاركة وطباعة */}
         <div className="grid grid-cols-2 gap-2">
@@ -523,6 +788,8 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
         items={items}
         customerName={customerName}
         phone={customer?.phone ?? null}
+        returnedNet={retNet}
+        remainingAfter={remainingAfter}
       />
     </div>
   );
@@ -534,14 +801,18 @@ function PrintableInvoice({
   items,
   customerName,
   phone,
+  returnedNet,
+  remainingAfter,
 }: {
   sale: Sale;
   items: SaleItem[];
   customerName: string;
   phone: string | null;
+  returnedNet: number;
+  remainingAfter: number;
 }) {
   const cancelled = sale.status === "cancelled";
-  const remaining = Number(sale.remaining_amount);
+  const remaining = remainingAfter;
   return (
     <div dir="rtl" className="hidden bg-white p-4 text-black print:block">
       <div className="text-center">
@@ -605,6 +876,18 @@ function PrintableInvoice({
           <span>المدفوع</span>
           <span>{formatEGP(sale.paid_amount)}</span>
         </div>
+        {returnedNet > 0 && (
+          <div className="flex justify-between">
+            <span>المرتجع</span>
+            <span>- {formatEGP(returnedNet)}</span>
+          </div>
+        )}
+        {returnedNet > 0 && (
+          <div className="flex justify-between font-bold">
+            <span>الصافي بعد المرتجع</span>
+            <span>{formatEGP(Number(sale.total) - returnedNet)}</span>
+          </div>
+        )}
         {remaining > 0 && (
           <div className="flex justify-between font-bold">
             <span>المتبقي</span>
