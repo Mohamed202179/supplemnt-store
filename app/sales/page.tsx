@@ -242,7 +242,7 @@ export default function SalesPage() {
           discount: Number(discount) || 0,
           paid,
           createdAt: saleTimestamp,
-          paymentMethod,
+          paymentMethod: paid > 0 ? paymentMethod : null,
         });
         setCompleting(false);
         router.push("/");
@@ -670,8 +670,13 @@ export default function SalesPage() {
             <Row label="المتبقي (دين)" value={formatEGP(remaining)} tone={remaining > 0 ? "danger" : "default"} />
           </div>
 
-          {/* طريقة الدفع (بتتسجل في البراندات الجديدة) */}
-          {brand.mode === "v2" && (
+          {/* طريقة الدفع (بتتسجل في البراندات الجديدة) — مش بتظهر لو الفاتورة آجلة بالكامل */}
+          {brand.mode === "v2" && paid <= 0 && cart.length > 0 && (
+            <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              الفاتورة آجلة بالكامل (دين) — مفيش طريقة دفع دلوقتي، هتتسجل لما العميل يدفع.
+            </p>
+          )}
+          {brand.mode === "v2" && paid > 0 && (
             <div className="space-y-2 rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
               <p className="text-sm text-gray-500 dark:text-gray-400">طريقة الدفع</p>
               <div className="grid grid-cols-3 gap-2">
