@@ -228,6 +228,18 @@ begin
   end;
   $$;
 
+  -- طريقة الدفع على تحصيل ديون العملاء (الدفعات القديمة بتفضل null = غير معروف)
+  alter table __S__.payments add column if not exists payment_method text;
+  do $$
+  begin
+    if not exists (select 1 from pg_constraint
+                   where conname = 'payments_payment_method_check' and conrelid = '__S__.payments'::regclass) then
+      alter table __S__.payments add constraint payments_payment_method_check
+        check (payment_method is null or payment_method in ('cash', 'instapay', 'wallet'));
+    end if;
+  end;
+  $$;
+
   -- ================= المرتجعات (مرتجع جزئي من فاتورة بيع) =================
   create table if not exists __S__.sale_returns (
     id              uuid primary key default gen_random_uuid(),
@@ -474,7 +486,7 @@ begin
     values (p_customer_id,
             case when p_customer_id is null then coalesce(nullif(trim(p_walk_in_name), ''), 'عميل نقدي') end,
             v_subtotal, v_discount, v_total, v_paid, v_remaining, v_status,
-            v_gross - v_discount, v_ts, p_payment_method)
+            v_gross - v_discount, v_ts, case when v_paid > 0 then p_payment_method end)
     returning id, invoice_number into v_sale_id, v_invoice;
 
     for v_line in select * from jsonb_array_elements(v_lines) loop
@@ -862,7 +874,9 @@ begin
   $$;
 
   -- ---- تحصيل من عميل (أي عضو) ----
-  create or replace function __S__.record_customer_payment(p_customer_id uuid, p_amount numeric, p_note text default null)
+  drop function if exists __S__.record_customer_payment(uuid, numeric, text);
+  create or replace function __S__.record_customer_payment(
+    p_customer_id uuid, p_amount numeric, p_note text default null, p_method text default null)
   returns void
   language plpgsql security definer
   set search_path = __S__, pg_temp
@@ -872,12 +886,15 @@ begin
   begin
     if not platform.is_member('__SLUG__') then raise exception 'غير مصرح'; end if;
     if p_amount is null or p_amount <= 0 then raise exception 'أدخل مبلغًا صحيحًا'; end if;
+    if p_method is not null and p_method not in ('cash', 'instapay', 'wallet') then
+      raise exception 'طريقة دفع غير صحيحة';
+    end if;
 
     select current_debt into v_debt from customers where id = p_customer_id for update;
     if not found then raise exception 'العميل غير موجود'; end if;
     if p_amount > v_debt then raise exception 'المبلغ أكبر من المديونية الحالية (%)', v_debt; end if;
 
-    insert into payments (customer_id, amount, note) values (p_customer_id, p_amount, p_note);
+    insert into payments (customer_id, amount, note, payment_method) values (p_customer_id, p_amount, p_note, p_method);
     update customers set current_debt = current_debt - p_amount, last_transaction_at = now()
      where id = p_customer_id;
   end;
