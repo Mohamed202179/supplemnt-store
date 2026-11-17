@@ -73,7 +73,7 @@ function ReportsPageContent() {
   async function loadReports() {
     setLoading(true);
 
-    const [{ data: sales }, { data: expenses }, { data: saleItems }] = await Promise.all([
+    const [{ data: sales }, { data: expenses }, { data: saleItems }, { data: returnsData }] = await Promise.all([
       supabase
         .from("sales")
         .select("total, profit")
@@ -91,12 +91,23 @@ function ReportsPageContent() {
         .eq("sales.status", "completed")
         .gte("sales.created_at", startISO)
         .lte("sales.created_at", endISO),
+      supabase
+        .from("sale_returns")
+        .select("net_value, profit_reversed, sales!inner(status)")
+        .eq("sales.status", "completed")
+        .gte("created_at", startISO)
+        .lte("created_at", endISO),
     ]);
 
+    // المرتجعات بتتخصم من المبيعات والربح في الفترة
+    const retRows = (returnsData ?? []) as any[];
+    const returnsNet = retRows.reduce((sum, r) => sum + Number(r.net_value), 0);
+    const returnsProfit = retRows.reduce((sum, r) => sum + Number(r.profit_reversed), 0);
+
     const salesRows = sales ?? [];
-    setSalesTotal(salesRows.reduce((sum: number, s: any) => sum + Number(s.total), 0));
+    setSalesTotal(salesRows.reduce((sum: number, s: any) => sum + Number(s.total), 0) - returnsNet);
     setInvoiceCount(salesRows.length);
-    setGrossProfit(salesRows.reduce((sum: number, s: any) => sum + Number(s.profit), 0));
+    setGrossProfit(salesRows.reduce((sum: number, s: any) => sum + Number(s.profit), 0) - returnsProfit);
     setExpensesTotal((expenses ?? []).reduce((sum: number, e: any) => sum + Number(e.amount), 0));
 
     const grouped = new Map<string, TopProduct>();
