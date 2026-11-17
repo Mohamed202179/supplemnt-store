@@ -5,8 +5,9 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { formatEGP, Customer } from "@/lib/types";
+import { formatEGP, Customer, PaymentMethod } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import PaymentMethodPicker from "@/components/PaymentMethodPicker";
 import { useRole } from "@/components/RoleProvider";
 
 export default function CustomersPage() {
@@ -33,6 +34,7 @@ export default function CustomersPage() {
   // quick payment
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
   const [savingPayment, setSavingPayment] = useState(false);
 
   // اختصار "عميل جديد" من الداشبورد: /customers?new=1 يفتح نموذج الإضافة
@@ -108,6 +110,7 @@ export default function CustomersPage() {
     setEditingId(null);
     setPayingId(c.id);
     setPayAmount("");
+    setPayMethod("cash");
   }
 
   async function submitPayment(c: Customer) {
@@ -126,7 +129,7 @@ export default function CustomersPage() {
 
     if (brand.mode === "v2") {
       try {
-        await ops.customerPayment(c.id, value);
+        await ops.customerPayment(c.id, value, null, payMethod);
       } catch (e) {
         setSavingPayment(false);
         setError(opError(e));
@@ -291,6 +294,7 @@ export default function CustomersPage() {
                       className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
                       autoFocus
                     />
+                    {brand.mode === "v2" && <PaymentMethodPicker value={payMethod} onChange={setPayMethod} />}
                     <div className="flex gap-2">
                       <button
                         onClick={() => submitPayment(c)}
