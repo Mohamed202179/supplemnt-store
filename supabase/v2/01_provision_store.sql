@@ -158,7 +158,7 @@ begin
   create table if not exists __S__.stock_movements (
     id             uuid primary key default gen_random_uuid(),
     product_id     uuid not null references __S__.products(id) on delete cascade,
-    type           text not null check (type in ('sale','sale_cancellation','manual_adjustment','purchase','purchase_cancellation')),
+    type           text not null check (type in ('sale','sale_cancellation','manual_adjustment','purchase','purchase_cancellation','sale_return')),
     quantity       numeric(12,2) not null,
     reference      text,
     previous_stock numeric(12,2) not null,
@@ -228,6 +228,46 @@ begin
   end;
   $$;
 
+  -- ================= المرتجعات (مرتجع جزئي من فاتورة بيع) =================
+  create table if not exists __S__.sale_returns (
+    id              uuid primary key default gen_random_uuid(),
+    return_number   serial,
+    sale_id         uuid not null references __S__.sales(id) on delete cascade,
+    customer_id     uuid references __S__.customers(id) on delete set null,
+    items_value     numeric(12,2) not null default 0,  -- قيمة الأصناف المرتجعة بسعر البيع
+    discount_share  numeric(12,2) not null default 0,  -- نصيبها من خصم الفاتورة
+    net_value       numeric(12,2) not null default 0,  -- الصافي = القيمة - نصيب الخصم
+    debt_reduction  numeric(12,2) not null default 0,  -- اتخصم من المتبقي/دين العميل
+    refund_amount   numeric(12,2) not null default 0,  -- اتردّ للعميل (فلوس)
+    profit_reversed numeric(12,2) not null default 0,  -- الربح اللي اتلغى بسبب المرتجع
+    refund_method   text check (refund_method is null or refund_method in ('cash','instapay','wallet')),
+    note            text,
+    created_at      timestamptz not null default now()
+  );
+
+  create table if not exists __S__.sale_return_items (
+    id                    uuid primary key default gen_random_uuid(),
+    return_id             uuid not null references __S__.sale_returns(id) on delete cascade,
+    sale_item_id          uuid references __S__.sale_items(id) on delete set null,
+    product_id            uuid references __S__.products(id) on delete set null,
+    product_name_snapshot text not null,
+    quantity              numeric(12,2) not null check (quantity > 0),
+    unit_price            numeric(12,2) not null,
+    unit_cost             numeric(12,2) not null default 0,
+    line_total            numeric(12,2) not null,
+    created_at            timestamptz not null default now()
+  );
+
+  create index if not exists idx_sale_returns_sale    on __S__.sale_returns(sale_id);
+  create index if not exists idx_sale_returns_created on __S__.sale_returns(created_at);
+  create index if not exists idx_sri_return           on __S__.sale_return_items(return_id);
+  create index if not exists idx_sri_sale_item        on __S__.sale_return_items(sale_item_id);
+
+  -- نضيف نوع حركة المخزون الجديد (لو الجدول موجود من قبل)
+  alter table __S__.stock_movements drop constraint if exists stock_movements_type_check;
+  alter table __S__.stock_movements add constraint stock_movements_type_check
+    check (type in ('sale','sale_cancellation','manual_adjustment','purchase','purchase_cancellation','sale_return'));
+
   -- ================= INDEXES / TRIGGERS =================
   create index if not exists idx_products_name     on __S__.products using gin (to_tsvector('simple', name));
   create index if not exists idx_products_category on __S__.products(category_id);
@@ -270,6 +310,8 @@ begin
   alter table __S__.purchase_items  enable row level security;
   alter table __S__.expenses        enable row level security;
   alter table __S__.app_settings    enable row level security;
+  alter table __S__.sale_returns      enable row level security;
+  alter table __S__.sale_return_items enable row level security;
 
   -- نمسح أي سياسات قديمة (بما فيها "authenticated full access") ونعيد بناءها
   do $$
@@ -304,6 +346,8 @@ begin
   create policy member_read on __S__.sale_items      for select to authenticated using (platform.is_member('__SLUG__'));
   create policy member_read on __S__.payments        for select to authenticated using (platform.is_member('__SLUG__'));
   create policy member_read on __S__.stock_movements for select to authenticated using (platform.is_member('__SLUG__'));
+  create policy member_read on __S__.sale_returns      for select to authenticated using (platform.is_member('__SLUG__'));
+  create policy member_read on __S__.sale_return_items for select to authenticated using (platform.is_member('__SLUG__'));
 
   -- الموردين والمشتريات والمصروفات: owner فقط
   create policy owner_all on __S__.suppliers       for all    to authenticated using (platform.is_owner('__SLUG__')) with check (platform.is_owner('__SLUG__'));
@@ -467,9 +511,13 @@ begin
   set search_path = __S__, pg_temp
   as $$
   declare
-    v_sale record;
-    v_item record;
-    v_new  numeric;
+    v_sale     record;
+    v_item     record;
+    v_new      numeric;
+    v_ret_qty  numeric;
+    v_restore  numeric;
+    v_ret_net  numeric;
+    v_ret_debt numeric;
   begin
     if not platform.is_owner('__SLUG__') then raise exception 'غير مصرح'; end if;
 
@@ -477,18 +525,27 @@ begin
     if not found then raise exception 'الفاتورة غير موجودة'; end if;
     if v_sale.status = 'cancelled' then raise exception 'الفاتورة ملغاة بالفعل'; end if;
 
+    -- لو الفاتورة عليها مرتجعات: بنرجّع للمخزون وللحسابات الباقي بس (المرتجع اتحسب قبل كده)
+    select coalesce(sum(net_value), 0), coalesce(sum(debt_reduction), 0)
+      into v_ret_net, v_ret_debt
+      from sale_returns where sale_id = p_sale_id;
+
     for v_item in
-      select product_id, quantity from sale_items
+      select id, product_id, quantity from sale_items
        where sale_id = p_sale_id and product_id is not null
        order by product_id
     loop
-      update products set current_stock = current_stock + v_item.quantity
-       where id = v_item.product_id
-       returning current_stock into v_new;
-      if found then
-        insert into stock_movements (product_id, type, quantity, reference, previous_stock, new_stock)
-        values (v_item.product_id, 'sale_cancellation', v_item.quantity,
-                'إلغاء فاتورة رقم ' || v_sale.invoice_number, v_new - v_item.quantity, v_new);
+      select coalesce(sum(quantity), 0) into v_ret_qty from sale_return_items where sale_item_id = v_item.id;
+      v_restore := v_item.quantity - v_ret_qty;
+      if v_restore > 0 then
+        update products set current_stock = current_stock + v_restore
+         where id = v_item.product_id
+         returning current_stock into v_new;
+        if found then
+          insert into stock_movements (product_id, type, quantity, reference, previous_stock, new_stock)
+          values (v_item.product_id, 'sale_cancellation', v_restore,
+                  'إلغاء فاتورة رقم ' || v_sale.invoice_number, v_new - v_restore, v_new);
+        end if;
       end if;
     end loop;
 
@@ -496,10 +553,137 @@ begin
 
     if v_sale.customer_id is not null then
       update customers
-         set current_debt = greatest(0, current_debt - v_sale.remaining_amount),
-             total_purchases = greatest(0, total_purchases - v_sale.total)
+         set current_debt = greatest(0, current_debt - greatest(0, v_sale.remaining_amount - v_ret_debt)),
+             total_purchases = greatest(0, total_purchases - greatest(0, v_sale.total - v_ret_net))
        where id = v_sale.customer_id;
     end if;
+  end;
+  $$;
+
+  -- ---- مرتجع جزئي من فاتورة بيع (owner) ----
+  -- p_items: [{"sale_item_id": "...", "quantity": 1}, ...]
+  -- القواعد: الصافي = قيمة الأصناف - نصيبها من خصم الفاتورة. بيتخصم الأول من المتبقي (دين) على الفاتورة،
+  -- والباقي بيتردّ للعميل. المخزون بيرجع، والربح بيقل، ودين العميل وإجمالي مشترياته بيتعدلوا.
+  create or replace function __S__.create_sale_return(
+    p_sale_id       uuid,
+    p_items         jsonb,
+    p_note          text default null,
+    p_refund_method text default 'cash'
+  ) returns uuid
+  language plpgsql security definer
+  set search_path = __S__, pg_temp
+  as $$
+  declare
+    v_sale      record;
+    v_agg       record;
+    v_item      record;
+    v_returned  numeric;
+    v_lines     jsonb := '[]'::jsonb;
+    v_line      jsonb;
+    v_items_val numeric := 0;
+    v_cost_val  numeric := 0;
+    v_disc      numeric := 0;
+    v_net       numeric;
+    v_prev_net  numeric;
+    v_prev_debt numeric;
+    v_open      numeric;
+    v_debt_red  numeric;
+    v_refund    numeric;
+    v_profit    numeric;
+    v_ret_id    uuid;
+    v_new_stock numeric;
+  begin
+    if not platform.is_owner('__SLUG__') then raise exception 'غير مصرح'; end if;
+    if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+      raise exception 'اختر صنفًا واحدًا على الأقل للمرتجع';
+    end if;
+    if p_refund_method is not null and p_refund_method not in ('cash', 'instapay', 'wallet') then
+      raise exception 'طريقة رد غير صحيحة';
+    end if;
+
+    select * into v_sale from sales where id = p_sale_id for update;
+    if not found then raise exception 'الفاتورة غير موجودة'; end if;
+    if v_sale.status = 'cancelled' then raise exception 'لا يمكن عمل مرتجع على فاتورة ملغاة'; end if;
+
+    -- دمج الأصناف المتكررة + قفل بنود الفاتورة بترتيب ثابت
+    for v_agg in
+      select (e->>'sale_item_id')::uuid as sale_item_id, sum((e->>'quantity')::numeric) as qty
+      from jsonb_array_elements(p_items) e
+      group by 1
+      order by 1
+    loop
+      if v_agg.qty is null or v_agg.qty <= 0 then raise exception 'كمية غير صحيحة'; end if;
+
+      select * into v_item from sale_items where id = v_agg.sale_item_id and sale_id = p_sale_id for update;
+      if not found then raise exception 'الصنف ده مش من الفاتورة دي'; end if;
+
+      select coalesce(sum(quantity), 0) into v_returned from sale_return_items where sale_item_id = v_item.id;
+      if v_agg.qty > v_item.quantity - v_returned then
+        raise exception 'الكمية المرتجعة من "%" أكبر من المتاح للإرجاع (%)',
+          v_item.product_name_snapshot, v_item.quantity - v_returned;
+      end if;
+
+      v_items_val := v_items_val + v_item.unit_price * v_agg.qty;
+      v_cost_val  := v_cost_val  + v_item.unit_cost  * v_agg.qty;
+      v_lines := v_lines || jsonb_build_object(
+        'sale_item_id', v_item.id, 'product_id', v_item.product_id, 'name', v_item.product_name_snapshot,
+        'qty', v_agg.qty, 'price', v_item.unit_price, 'cost', v_item.unit_cost);
+    end loop;
+
+    select coalesce(sum(net_value), 0), coalesce(sum(debt_reduction), 0)
+      into v_prev_net, v_prev_debt
+      from sale_returns where sale_id = p_sale_id;
+
+    if v_sale.subtotal > 0 then
+      v_disc := round(v_sale.discount * v_items_val / v_sale.subtotal, 2);
+    end if;
+    v_net      := greatest(0, least(v_items_val - v_disc, v_sale.total - v_prev_net));
+    v_open     := greatest(0, v_sale.remaining_amount - v_prev_debt);
+    v_debt_red := least(v_net, v_open);
+    v_refund   := v_net - v_debt_red;
+    v_profit   := (v_items_val - v_cost_val) - v_disc;
+
+    insert into sale_returns (sale_id, customer_id, items_value, discount_share, net_value,
+                              debt_reduction, refund_amount, profit_reversed, refund_method, note)
+    values (p_sale_id, v_sale.customer_id, v_items_val, v_disc, v_net, v_debt_red, v_refund, v_profit,
+            case when v_refund > 0 then coalesce(p_refund_method, 'cash') end,
+            nullif(trim(p_note), ''))
+    returning id into v_ret_id;
+
+    -- قفل المنتجات بترتيب ثابت (نفس ترتيب البيع) علشان ما يحصلش تعارض
+    perform 1 from products
+     where id in (select (l->>'product_id')::uuid from jsonb_array_elements(v_lines) l where l->>'product_id' is not null)
+     order by id for update;
+
+    for v_line in select * from jsonb_array_elements(v_lines) loop
+      insert into sale_return_items (return_id, sale_item_id, product_id, product_name_snapshot,
+                                     quantity, unit_price, unit_cost, line_total)
+      values (v_ret_id, (v_line->>'sale_item_id')::uuid, (v_line->>'product_id')::uuid, v_line->>'name',
+              (v_line->>'qty')::numeric, (v_line->>'price')::numeric, (v_line->>'cost')::numeric,
+              (v_line->>'price')::numeric * (v_line->>'qty')::numeric);
+
+      if (v_line->>'product_id') is not null then
+        update products set current_stock = current_stock + (v_line->>'qty')::numeric
+         where id = (v_line->>'product_id')::uuid
+         returning current_stock into v_new_stock;
+        if found then
+          insert into stock_movements (product_id, type, quantity, reference, previous_stock, new_stock)
+          values ((v_line->>'product_id')::uuid, 'sale_return', (v_line->>'qty')::numeric,
+                  'مرتجع فاتورة رقم ' || v_sale.invoice_number,
+                  v_new_stock - (v_line->>'qty')::numeric, v_new_stock);
+        end if;
+      end if;
+    end loop;
+
+    if v_sale.customer_id is not null then
+      update customers
+         set current_debt = greatest(0, current_debt - v_debt_red),
+             total_purchases = greatest(0, total_purchases - v_net),
+             last_transaction_at = now()
+       where id = v_sale.customer_id;
+    end if;
+
+    return v_ret_id;
   end;
   $$;
 
