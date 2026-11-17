@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { Customer, Sale, Payment, formatEGP, formatDate } from "@/lib/types";
+import { Customer, Sale, Payment, PaymentMethod, formatEGP, formatDate, paymentMethodLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 
 export default function CustomerDetailPage({ params }: { params: { id: string } }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -14,6 +16,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,7 +62,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
 
     if (brand.mode === "v2") {
       try {
-        await ops.customerPayment(customer.id, value);
+        await ops.customerPayment(customer.id, value, null, method);
       } catch (e) {
         setSaving(false);
         setError(opError(e));
@@ -67,6 +70,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
       }
       setSaving(false);
       setAmount("");
+      setMethod("cash");
       setShowPayment(false);
       load();
       return;
@@ -142,6 +146,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 placeholder="المبلغ المدفوع"
                 className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
+              {brand.mode === "v2" && <PaymentMethodPicker value={method} onChange={setMethod} />}
               <button
                 type="submit"
                 disabled={saving}
@@ -162,7 +167,15 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2 text-sm">
                   <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
-                  <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
+                  <span className="flex items-center gap-2">
+                    {paymentMethodLabel(p.payment_method) && (
+                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                        <PaymentMethodIcon method={p.payment_method} className="h-4 w-4" />
+                        {paymentMethodLabel(p.payment_method)}
+                      </span>
+                    )}
+                    <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
+                  </span>
                 </li>
               ))}
             </ul>
