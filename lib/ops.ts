@@ -39,6 +39,14 @@ export const ops = {
 
   cancelSale: (saleId: string) => rpc("cancel_sale", { p_sale_id: saleId }),
 
+  createSaleReturn: (saleId: string, items: { sale_item_id: string; quantity: number }[], note: string | null, refundMethod: string | null) =>
+    rpc<string>("create_sale_return", {
+      p_sale_id: saleId,
+      p_items: items,
+      p_note: note,
+      p_refund_method: refundMethod,
+    }),
+
   createPurchase: (a: {
     supplierId: string | null;
     items: { product_id: string; quantity: number; unit_cost: number }[];

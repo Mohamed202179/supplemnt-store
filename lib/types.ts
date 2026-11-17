@@ -259,3 +259,32 @@ export function formatDateTime(dateStr: string): string {
 export function paymentStatusLabel(status: PaymentStatus): string {
   return status === "paid" ? "مدفوع بالكامل" : status === "partial" ? "مدفوع جزئيًا" : "غير مدفوع";
 }
+
+// مرتجع جزئي من فاتورة بيع (البراندات من نوع v2)
+export interface SaleReturn {
+  id: string;
+  return_number: number;
+  sale_id: string;
+  customer_id: string | null;
+  items_value: number;
+  discount_share: number;
+  net_value: number;
+  debt_reduction: number;
+  refund_amount: number;
+  profit_reversed: number;
+  refund_method: PaymentMethod | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface SaleReturnItem {
+  id: string;
+  return_id: string;
+  sale_item_id: string | null;
+  product_id: string | null;
+  product_name_snapshot: string;
+  quantity: number;
+  unit_price: number;
+  unit_cost: number;
+  line_total: number;
+}
