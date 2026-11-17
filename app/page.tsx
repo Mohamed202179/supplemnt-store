@@ -84,6 +84,7 @@ export default function DashboardPage() {
       { data: monthExpensesData },
       { data: weekSales },
       { data: weekItems },
+      { data: returnsData },
     ] = await Promise.all([
       supabase
         .from("sales")
@@ -116,12 +117,20 @@ export default function DashboardPage() {
         .select("product_name_snapshot, quantity, sales!inner(status, created_at)")
         .eq("sales.status", "completed")
         .gte("sales.created_at", sevenDaysAgo.toISOString()),
+      // المرتجعات (تتخصم من المبيعات والربح في يوم المرتجع)
+      supabase
+        .from("sale_returns")
+        .select("net_value, profit_reversed, created_at, sales!inner(status)")
+        .eq("sales.status", "completed")
+        .gte("created_at", (startOfMonth < sevenDaysAgo ? startOfMonth : sevenDaysAgo).toISOString()),
     ]);
 
-    const todaySales = (todaySalesData ?? []).reduce(
-      (sum, s: any) => sum + Number(s.total),
-      0
-    );
+    const retRows = (returnsData ?? []) as any[];
+    const sumRet = (rows: any[], field: string) => rows.reduce((sum, r) => sum + Number(r[field]), 0);
+
+    const todaySales =
+      (todaySalesData ?? []).reduce((sum, s: any) => sum + Number(s.total), 0) -
+      sumRet(retRows.filter((r) => new Date(r.created_at) >= startOfDay), "net_value");
     const todayInvoices = (todaySalesData ?? []).length;
     const allProducts = (products ?? []) as Product[];
     const inventoryValue = allProducts.reduce(
@@ -151,10 +160,9 @@ export default function DashboardPage() {
           new Date(b.expiry_date!).getTime()
       );
 
-    const monthGrossProfit = (monthSales ?? []).reduce(
-      (sum, s: any) => sum + Number(s.profit),
-      0
-    );
+    const monthGrossProfit =
+      (monthSales ?? []).reduce((sum, s: any) => sum + Number(s.profit), 0) -
+      sumRet(retRows.filter((r) => new Date(r.created_at) >= startOfMonth), "profit_reversed");
     const monthExpenses = (monthExpensesData ?? []).reduce(
       (sum, e: any) => sum + Number(e.amount),
       0
@@ -168,19 +176,16 @@ export default function DashboardPage() {
       const dayRows = (weekSales ?? []).filter(
         (s: any) => new Date(s.created_at).toDateString() === key
       );
+      const dayRet = retRows.filter((r) => new Date(r.created_at).toDateString() === key);
       weekSeries.push({
         label: day.toLocaleDateString(
           lang === "ar" ? "ar-EG" : "en-US",
           { weekday: "short" }
         ),
-        sales: dayRows.reduce(
-          (sum: number, s: any) => sum + Number(s.total),
-          0
-        ),
-        profit: dayRows.reduce(
-          (sum: number, s: any) => sum + Number(s.profit),
-          0
-        ),
+        sales:
+          dayRows.reduce((sum: number, s: any) => sum + Number(s.total), 0) - sumRet(dayRet, "net_value"),
+        profit:
+          dayRows.reduce((sum: number, s: any) => sum + Number(s.profit), 0) - sumRet(dayRet, "profit_reversed"),
       });
     }
 
