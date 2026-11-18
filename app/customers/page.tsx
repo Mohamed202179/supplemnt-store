@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
@@ -11,6 +12,7 @@ import PaymentMethodPicker from "@/components/PaymentMethodPicker";
 import { useRole } from "@/components/RoleProvider";
 
 export default function CustomersPage() {
+  const router = useRouter();
   const { isOwner } = useRole();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
@@ -128,8 +130,9 @@ export default function CustomersPage() {
     setSavingPayment(true);
 
     if (brand.mode === "v2") {
+      let paymentId: string;
       try {
-        await ops.customerPayment(c.id, value, null, payMethod);
+        paymentId = await ops.customerPayment(c.id, value, null, payMethod);
       } catch (e) {
         setSavingPayment(false);
         setError(opError(e));
@@ -139,6 +142,7 @@ export default function CustomersPage() {
       setPayingId(null);
       setPayAmount("");
       load();
+      router.push(`/payments/${paymentId}`); // إيصال الدفعة (طباعة / مشاركة)
       return;
     }
 
