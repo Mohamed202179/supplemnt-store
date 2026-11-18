@@ -172,8 +172,11 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {payments.map((p) => {
                 const inner = (
-                  <>
-                    <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
+                  <div className={`flex w-full items-center justify-between ${p.status === "cancelled" ? "line-through opacity-50" : ""}`}>
+                    <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                      {formatDate(p.created_at)}
+                      {p.status === "cancelled" && <span className="ms-2 text-[11px] font-bold text-red-500">ملغاة</span>}
+                    </span>
                     <span className="flex items-center gap-2">
                       {paymentMethodLabel(p.payment_method) && (
                         <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
@@ -183,7 +186,7 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
                       )}
                       <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
                     </span>
-                  </>
+                  </div>
                 );
                 return (
                   <li key={p.id}>
