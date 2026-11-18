@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
@@ -10,6 +12,7 @@ import PaymentMethodPicker from "@/components/PaymentMethodPicker";
 import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 
 export default function CustomerDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -61,8 +64,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
     setSaving(true);
 
     if (brand.mode === "v2") {
+      let paymentId: string;
       try {
-        await ops.customerPayment(customer.id, value, null, method);
+        paymentId = await ops.customerPayment(customer.id, value, null, method);
       } catch (e) {
         setSaving(false);
         setError(opError(e));
@@ -73,6 +77,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
       setMethod("cash");
       setShowPayment(false);
       load();
+      router.push(`/payments/${paymentId}`); // إيصال الدفعة (طباعة / مشاركة)
       return;
     }
 
@@ -160,24 +165,47 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
 
         <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
           <h2 className="mb-2 text-sm font-bold text-gray-900 dark:text-gray-100">سجل المدفوعات</h2>
+          {brand.mode === "v2" && payments.length > 0 && (
+            <p className="mb-1 text-[11px] text-gray-400 dark:text-gray-500">اضغط على أي دفعة لفتح إيصالها وطباعته</p>
+          )}
           {payments.length === 0 ? (
             <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد مدفوعات مسجلة</p>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {payments.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
-                  <span className="flex items-center gap-2">
-                    {paymentMethodLabel(p.payment_method) && (
-                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
-                        <PaymentMethodIcon method={p.payment_method} className="h-4 w-4" />
-                        {paymentMethodLabel(p.payment_method)}
+              {payments.map((p) => {
+                const inner = (
+                  <>
+                    <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
+                    <span className="flex items-center gap-2">
+                      {paymentMethodLabel(p.payment_method) && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                          <PaymentMethodIcon method={p.payment_method} className="h-4 w-4" />
+                          {paymentMethodLabel(p.payment_method)}
+                        </span>
+                      )}
+                      <span className="text-start">
+                        <span className="block font-bold text-brand-700">{formatEGP(p.amount)}</span>
+                        {p.balance_after != null && (
+                          <span className="block text-[11px] text-gray-400 dark:text-gray-500">
+                            المتبقي {formatEGP(Number(p.balance_after))}
+                          </span>
+                        )}
                       </span>
+                    </span>
+                  </>
+                );
+                return (
+                  <li key={p.id}>
+                    {brand.mode === "v2" ? (
+                      <Link href={`/payments/${p.id}`} className="flex items-center justify-between py-2 text-sm active:opacity-70">
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className="flex items-center justify-between py-2 text-sm">{inner}</div>
                     )}
-                    <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
