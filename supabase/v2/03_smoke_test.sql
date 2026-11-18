@@ -13,6 +13,7 @@ set local role authenticated;
 do $$
 declare
   v_prod uuid; v_sup uuid; v_cust uuid; v_pur uuid; v_sale uuid; v_stock numeric; v_debt numeric;
+  v_pay uuid; v_sale2 uuid; v_pur2 uuid;
 begin
   insert into bfit.products (name, selling_price, purchase_price, min_stock) values ('منتج اختبار', 200, 100, 2) returning id into v_prod;
   insert into bfit.suppliers (name) values ('مورد اختبار') returning id into v_sup;
@@ -41,8 +42,10 @@ begin
     assert sqlerrm like '%غير متوفرة%', 'unexpected error: ' || sqlerrm;
   end;
 
-  -- تحصيل 100
-  perform bfit.record_customer_payment(v_cust, 100, 'test');
+  -- تحصيل 100 بإنستا باي: بترجّع id الدفعة وبتسجّل الطريقة والمتبقي بعدها
+  v_pay := bfit.record_customer_payment(v_cust, 100, 'test', 'instapay');
+  assert (select payment_method from bfit.payments where id = v_pay) = 'instapay', 'payment method not saved';
+  assert (select balance_after from bfit.payments where id = v_pay) = 150, 'balance_after should be 150';
   select current_debt into v_debt from bfit.customers where id = v_cust;
   assert v_debt = 150, 'debt after payment should be 150, got ' || v_debt;
 
@@ -55,6 +58,16 @@ begin
   perform bfit.cancel_purchase(v_pur);
   select current_stock into v_stock from bfit.products where id = v_prod;
   assert v_stock = 0, 'stock after cancel_purchase should be 0, got ' || v_stock;
+
+  -- سداد مورد 50 كاش: الطريقة والمتبقي بعدها
+  v_pur2 := bfit.create_purchase(v_sup, jsonb_build_array(jsonb_build_object('product_id', v_prod, 'quantity', 1, 'unit_cost', 120)), 0, 0);
+  v_pay := bfit.record_supplier_payment(v_sup, 50, null, 'cash');
+  assert (select payment_method from bfit.payments where id = v_pay) = 'cash', 'supplier payment method not saved';
+  assert (select balance_after from bfit.payments where id = v_pay) = 70, 'supplier balance_after should be 70';
+
+  -- فاتورة آجلة بالكامل (مدفوع = 0): مفيش طريقة دفع حتى لو اتبعتت
+  v_sale2 := bfit.create_sale(v_cust, null, jsonb_build_array(jsonb_build_object('product_id', v_prod, 'quantity', 1)), 0, 0, null, 'instapay');
+  assert (select payment_method from bfit.sales where id = v_sale2) is null, 'unpaid sale must have null payment_method';
 
   raise notice '✅ كل الاختبارات نجحت';
 end;

@@ -230,6 +230,8 @@ begin
 
   -- طريقة الدفع على تحصيل ديون العملاء (الدفعات القديمة بتفضل null = غير معروف)
   alter table __S__.payments add column if not exists payment_method text;
+  -- المتبقي من المديونية بعد الدفعة دي (للإيصال). الدفعات القديمة null.
+  alter table __S__.payments add column if not exists balance_after numeric(12,2);
   do $$
   begin
     if not exists (select 1 from pg_constraint
@@ -875,14 +877,16 @@ begin
 
   -- ---- تحصيل من عميل (أي عضو) ----
   drop function if exists __S__.record_customer_payment(uuid, numeric, text);
+  drop function if exists __S__.record_customer_payment(uuid, numeric, text, text);
   create or replace function __S__.record_customer_payment(
     p_customer_id uuid, p_amount numeric, p_note text default null, p_method text default null)
-  returns void
+  returns uuid
   language plpgsql security definer
   set search_path = __S__, pg_temp
   as $$
   declare
     v_debt numeric;
+    v_id   uuid;
   begin
     if not platform.is_member('__SLUG__') then raise exception 'غير مصرح'; end if;
     if p_amount is null or p_amount <= 0 then raise exception 'أدخل مبلغًا صحيحًا'; end if;
@@ -894,31 +898,44 @@ begin
     if not found then raise exception 'العميل غير موجود'; end if;
     if p_amount > v_debt then raise exception 'المبلغ أكبر من المديونية الحالية (%)', v_debt; end if;
 
-    insert into payments (customer_id, amount, note, payment_method) values (p_customer_id, p_amount, p_note, p_method);
+    insert into payments (customer_id, amount, note, payment_method, balance_after)
+    values (p_customer_id, p_amount, p_note, p_method, v_debt - p_amount)
+    returning id into v_id;
     update customers set current_debt = current_debt - p_amount, last_transaction_at = now()
      where id = p_customer_id;
+    return v_id;
   end;
   $$;
 
   -- ---- سداد لمورد (owner) ----
-  create or replace function __S__.record_supplier_payment(p_supplier_id uuid, p_amount numeric, p_note text default null)
-  returns void
+  drop function if exists __S__.record_supplier_payment(uuid, numeric, text);
+  drop function if exists __S__.record_supplier_payment(uuid, numeric, text, text);
+  create or replace function __S__.record_supplier_payment(
+    p_supplier_id uuid, p_amount numeric, p_note text default null, p_method text default null)
+  returns uuid
   language plpgsql security definer
   set search_path = __S__, pg_temp
   as $$
   declare
     v_debt numeric;
+    v_id   uuid;
   begin
     if not platform.is_owner('__SLUG__') then raise exception 'غير مصرح'; end if;
     if p_amount is null or p_amount <= 0 then raise exception 'أدخل مبلغًا صحيحًا'; end if;
+    if p_method is not null and p_method not in ('cash', 'instapay', 'wallet') then
+      raise exception 'طريقة دفع غير صحيحة';
+    end if;
 
     select current_debt into v_debt from suppliers where id = p_supplier_id for update;
     if not found then raise exception 'المورد غير موجود'; end if;
     if p_amount > v_debt then raise exception 'المبلغ أكبر من المديونية الحالية (%)', v_debt; end if;
 
-    insert into payments (supplier_id, amount, note) values (p_supplier_id, p_amount, p_note);
+    insert into payments (supplier_id, amount, note, payment_method, balance_after)
+    values (p_supplier_id, p_amount, p_note, p_method, v_debt - p_amount)
+    returning id into v_id;
     update suppliers set current_debt = current_debt - p_amount, total_paid = total_paid + p_amount
      where id = p_supplier_id;
+    return v_id;
   end;
   $$;
 
