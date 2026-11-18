@@ -18,6 +18,7 @@ import {
   paymentMethodLabel,
 } from "@/lib/types";
 import { useRole } from "@/components/RoleProvider";
+import { useMemberNames } from "@/lib/useMemberNames";
 import { useTheme } from "@/components/ThemeProvider";
 import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 import { renderInvoiceImage, InvoiceImageData } from "@/lib/invoiceImage";
@@ -53,6 +54,7 @@ function formatQty(q: number): string {
 
 export default function SaleDetailPage({ params }: { params: { id: string } }) {
   const { isOwner } = useRole();
+  const names = useMemberNames();
   const router = useRouter();
   const { resolvedTheme, setThemeMode } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -526,6 +528,18 @@ export default function SaleDetailPage({ params }: { params: { id: string } }) {
             <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
               <PaymentMethodIcon method={sale.payment_method} className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               طريقة الدفع: {paymentMethodLabel(sale.payment_method)}
+            </p>
+          )}
+          {sale.created_by && names[sale.created_by] && (
+            <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+              <User className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
+              البائع: {names[sale.created_by]}
+            </p>
+          )}
+          {sale.status === "cancelled" && sale.cancelled_by && names[sale.cancelled_by] && (
+            <p className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-300">
+              <XCircle className="h-3.5 w-3.5 shrink-0" />
+              ألغاها: {names[sale.cancelled_by]}
             </p>
           )}
         </div>
