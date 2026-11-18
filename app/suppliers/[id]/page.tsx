@@ -1,20 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { ops, opError } from "@/lib/ops";
-import { Supplier, Purchase, Payment, formatEGP, formatDate } from "@/lib/types";
+import { Supplier, Purchase, Payment, PaymentMethod, formatEGP, formatDate, paymentMethodLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
+import PaymentMethodPicker from "@/components/PaymentMethodPicker";
+import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 
 function SupplierDetailPageContent({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("cash");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,8 +65,9 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
     setSaving(true);
 
     if (brand.mode === "v2") {
+      let paymentId: string;
       try {
-        await ops.supplierPayment(supplier.id, value);
+        paymentId = await ops.supplierPayment(supplier.id, value, null, method);
       } catch (e) {
         setSaving(false);
         setError(opError(e));
@@ -68,8 +75,10 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
       }
       setSaving(false);
       setAmount("");
+      setMethod("cash");
       setShowPayment(false);
       load();
+      router.push(`/payments/${paymentId}`); // سند السداد (طباعة / مشاركة)
       return;
     }
 
@@ -143,6 +152,7 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
                 placeholder="المبلغ المدفوع"
                 className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm dark:bg-gray-800 dark:text-gray-100"
               />
+              {brand.mode === "v2" && <PaymentMethodPicker value={method} onChange={setMethod} />}
               <button
                 type="submit"
                 disabled={saving}
@@ -160,12 +170,33 @@ function SupplierDetailPageContent({ params }: { params: { id: string } }) {
             <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد مدفوعات مسجلة</p>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {payments.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
-                  <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
-                </li>
-              ))}
+              {payments.map((p) => {
+                const inner = (
+                  <>
+                    <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(p.created_at)}</span>
+                    <span className="flex items-center gap-2">
+                      {paymentMethodLabel(p.payment_method) && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                          <PaymentMethodIcon method={p.payment_method} className="h-4 w-4" />
+                          {paymentMethodLabel(p.payment_method)}
+                        </span>
+                      )}
+                      <span className="font-bold text-brand-700">{formatEGP(p.amount)}</span>
+                    </span>
+                  </>
+                );
+                return (
+                  <li key={p.id}>
+                    {brand.mode === "v2" ? (
+                      <Link href={`/payments/${p.id}`} className="flex items-center justify-between py-2 text-sm active:opacity-70">
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className="flex items-center justify-between py-2 text-sm">{inner}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
