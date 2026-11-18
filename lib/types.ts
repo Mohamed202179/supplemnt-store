@@ -144,6 +144,7 @@ export interface Payment {
   amount: number;
   note: string | null;
   payment_method?: PaymentMethod | null;
+  balance_after?: number | null; // المتبقي من المديونية بعد الدفعة (null للدفعات القديمة)
   created_at: string;
 }
 
