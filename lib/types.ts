@@ -93,6 +93,8 @@ export interface Sale {
   profit: number;
   created_at: string;
   cancelled_at: string | null;
+  created_by?: string | null; // مين عمل العملية (null للقديم)
+  cancelled_by?: string | null;
   payment_method?: PaymentMethod | null;
   customers?: { name: string } | null;
 }
@@ -123,6 +125,8 @@ export interface Purchase {
   status: SaleStatus;
   created_at: string;
   cancelled_at: string | null;
+  created_by?: string | null; // مين عمل العملية (null للقديم)
+  cancelled_by?: string | null;
 }
 
 export interface PurchaseItem {
@@ -145,6 +149,10 @@ export interface Payment {
   note: string | null;
   payment_method?: PaymentMethod | null;
   balance_after?: number | null; // المتبقي من المديونية بعد الدفعة (null للدفعات القديمة)
+  status?: "active" | "cancelled";
+  created_by?: string | null;
+  cancelled_by?: string | null;
+  cancelled_at?: string | null;
   created_at: string;
 }
 
