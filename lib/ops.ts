@@ -66,8 +66,8 @@ export const ops = {
     rpc("adjust_stock", { p_product_id: productId, p_target: target, p_reason: reason }),
 
   customerPayment: (customerId: string, amount: number, note: string | null = null, method: string | null = null) =>
-    rpc("record_customer_payment", { p_customer_id: customerId, p_amount: amount, p_note: note, p_method: method }),
+    rpc<string>("record_customer_payment", { p_customer_id: customerId, p_amount: amount, p_note: note, p_method: method }),
 
-  supplierPayment: (supplierId: string, amount: number, note: string | null = null) =>
-    rpc("record_supplier_payment", { p_supplier_id: supplierId, p_amount: amount, p_note: note }),
+  supplierPayment: (supplierId: string, amount: number, note: string | null = null, method: string | null = null) =>
+    rpc<string>("record_supplier_payment", { p_supplier_id: supplierId, p_amount: amount, p_note: note, p_method: method }),
 };
