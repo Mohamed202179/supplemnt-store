@@ -7,8 +7,10 @@ import { ops, opError } from "@/lib/ops";
 import { Purchase, PurchaseItem, formatEGP, formatDateTime, paymentStatusLabel } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
+import { useMemberNames } from "@/lib/useMemberNames";
 
 function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
+  const names = useMemberNames();
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,6 +134,12 @@ function PurchaseDetailPageContent({ params }: { params: { id: string } }) {
             <span>{purchase.supplier_name_snapshot || "بدون مورد"}</span>
             <span>{formatDateTime(purchase.created_at)}</span>
           </div>
+          {purchase.created_by && names[purchase.created_by] && (
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">سجّلها: {names[purchase.created_by!]}</p>
+          )}
+          {purchase.status === "cancelled" && purchase.cancelled_by && names[purchase.cancelled_by] && (
+            <p className="mt-0.5 text-xs text-red-500">ألغاها: {names[purchase.cancelled_by!]}</p>
+          )}
 
           <ul className="mt-3 divide-y divide-gray-100 dark:divide-gray-800">
             {items.map((item) => (
