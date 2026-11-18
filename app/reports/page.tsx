@@ -2,11 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatEGP, getStockStatus, Product, Customer } from "@/lib/types";
+import { formatEGP, getStockStatus, Product, Customer, PAYMENT_METHODS } from "@/lib/types";
+import { brand } from "@/lib/brand";
+import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 import PageHeader from "@/components/PageHeader";
 import OwnerGate from "@/components/OwnerGate";
 
 type RangeKey = "today" | "week" | "month" | "custom";
+
+interface MethodRow {
+  sales: number; // مدفوع من فواتير البيع
+  collections: number; // تحصيل ديون عملاء
+  refunds: number; // مرتجعات اترّدت فلوس
+  suppliers: number; // سداد موردين
+}
+const emptyMethodRow = (): MethodRow => ({ sales: 0, collections: 0, refunds: 0, suppliers: 0 });
+const methodKey = (m: string | null | undefined) => (m === "cash" || m === "instapay" || m === "wallet" ? m : "unknown");
 
 interface TopProduct {
   name: string;
@@ -27,6 +38,7 @@ function ReportsPageContent() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [methodRows, setMethodRows] = useState<Record<string, MethodRow> | null>(null);
 
   const { startISO, endISO } = useMemo(() => {
     const now = new Date();
@@ -120,6 +132,42 @@ function ReportsPageContent() {
     }
     setTopProducts(Array.from(grouped.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 5));
 
+    // حركة الفلوس حسب طريقة الدفع (البراندات الجديدة بس: الأعمدة مش موجودة في legacy)
+    if (brand.mode === "v2") {
+      const [{ data: mSales }, { data: mPays }, { data: mRets }] = await Promise.all([
+        supabase
+          .from("sales")
+          .select("paid_amount, payment_method")
+          .eq("status", "completed")
+          .gt("paid_amount", 0)
+          .gte("created_at", startISO)
+          .lte("created_at", endISO),
+        supabase
+          .from("payments")
+          .select("amount, payment_method, supplier_id")
+          .eq("status", "active")
+          .gte("created_at", startISO)
+          .lte("created_at", endISO),
+        supabase
+          .from("sale_returns")
+          .select("refund_amount, refund_method")
+          .gt("refund_amount", 0)
+          .gte("created_at", startISO)
+          .lte("created_at", endISO),
+      ]);
+      const rows: Record<string, MethodRow> = {};
+      const row = (m: string | null | undefined) => (rows[methodKey(m)] ??= emptyMethodRow());
+      for (const s of (mSales ?? []) as any[]) row(s.payment_method).sales += Number(s.paid_amount);
+      for (const p of (mPays ?? []) as any[]) {
+        if (p.supplier_id) row(p.payment_method).suppliers += Number(p.amount);
+        else row(p.payment_method).collections += Number(p.amount);
+      }
+      for (const x of (mRets ?? []) as any[]) row(x.refund_method).refunds += Number(x.refund_amount);
+      setMethodRows(rows);
+    } else {
+      setMethodRows(null);
+    }
+
     setLoading(false);
   }
 
@@ -194,6 +242,8 @@ function ReportsPageContent() {
               </div>
             </section>
 
+            {methodRows && <PaymentMethodsSection rows={methodRows} />}
+
             <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
               <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">الأكثر مبيعًا</h2>
               {topProducts.length === 0 ? (
@@ -237,6 +287,50 @@ function ReportsPageContent() {
         )}
       </div>
     </div>
+  );
+}
+
+function PaymentMethodsSection({ rows }: { rows: Record<string, MethodRow> }) {
+  const order = [...PAYMENT_METHODS.map((m) => m.value as string), "unknown"];
+  const net = (r: MethodRow) => r.sales + r.collections - r.refunds - r.suppliers;
+  const visible = order.filter((k) => {
+    const r = rows[k];
+    return r && (r.sales || r.collections || r.refunds || r.suppliers);
+  });
+  const total = visible.reduce((sum, k) => sum + net(rows[k]), 0);
+  return (
+    <section className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+      <h2 className="mb-1 text-sm font-bold text-gray-900 dark:text-gray-100">طرق الدفع</h2>
+      <p className="mb-3 text-[11px] text-gray-400 dark:text-gray-500">
+        الداخل: مبيعات وتحصيل ديون. الخارج: مرتجعات مردودة وسداد موردين. (فواتير الشراء مش داخلة)
+      </p>
+      {visible.length === 0 ? (
+        <p className="py-3 text-center text-xs text-gray-400 dark:text-gray-500">لا توجد حركة في هذه الفترة</p>
+      ) : (
+        <div className="space-y-3">
+          {visible.map((k) => {
+            const r = rows[k];
+            const label = PAYMENT_METHODS.find((m) => m.value === k)?.label ?? "غير محدد (فواتير قديمة)";
+            return (
+              <div key={k} className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+                <p className="mb-2 flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {k !== "unknown" && <PaymentMethodIcon method={k as "cash" | "instapay" | "wallet"} className="h-5 w-5" />}
+                  {label}
+                </p>
+                <div className="space-y-1.5 text-sm">
+                  {r.sales > 0 && <Row label="مبيعات" value={formatEGP(r.sales)} />}
+                  {r.collections > 0 && <Row label="تحصيل ديون" value={formatEGP(r.collections)} />}
+                  {r.refunds > 0 && <Row label="مرتجعات مردودة" value={`- ${formatEGP(r.refunds)}`} tone="danger" />}
+                  {r.suppliers > 0 && <Row label="سداد موردين" value={`- ${formatEGP(r.suppliers)}`} tone="danger" />}
+                  <Row label="الصافي" value={formatEGP(net(r))} bold tone={net(r) >= 0 ? "default" : "danger"} />
+                </div>
+              </div>
+            );
+          })}
+          <Row label="إجمالي الصافي" value={formatEGP(total)} bold tone={total >= 0 ? "default" : "danger"} />
+        </div>
+      )}
+    </section>
   );
 }
 
