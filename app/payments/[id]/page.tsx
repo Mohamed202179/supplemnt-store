@@ -6,9 +6,11 @@ import { supabase } from "@/lib/supabase/client";
 import { brand } from "@/lib/brand";
 import { Payment, Customer, Supplier, formatEGP, paymentMethodLabel } from "@/lib/types";
 import { useRole } from "@/components/RoleProvider";
+import { ops, opError } from "@/lib/ops";
+import { useMemberNames } from "@/lib/useMemberNames";
 import PaymentMethodIcon from "@/components/PaymentMethodIcon";
 import { renderReceiptImage, ReceiptImageData } from "@/lib/receiptImage";
-import { CalendarDays, CheckCircle2, ChevronRight, Clock, Phone, Printer, Receipt, Share2, User } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronRight, Clock, Phone, Printer, Receipt, Share2, User, UserCheck, XCircle } from "lucide-react";
 
 function formatReceiptDate(iso: string): string {
   return new Date(iso).toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -22,6 +24,8 @@ function formatReceiptTime(iso: string): string {
 export default function PaymentReceiptPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { isOwner, roleLoaded } = useRole();
+  const names = useMemberNames();
+  const [cancelling, setCancelling] = useState(false);
   const [payment, setPayment] = useState<Payment | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
@@ -58,7 +62,10 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
   }
 
   const isSupplier = !!payment?.supplier_id;
-  const title = isSupplier ? "سند سداد لمورد" : "إيصال استلام دفعة";
+  const cancelled = payment?.status === "cancelled";
+  const title = (isSupplier ? "سند سداد لمورد" : "إيصال استلام دفعة") + (cancelled ? " (ملغاة)" : "");
+  const createdByName = payment?.created_by ? names[payment.created_by] : null;
+  const cancelledByName = payment?.cancelled_by ? names[payment.cancelled_by] : null;
   const partyLabel = isSupplier ? "المورد" : "العميل";
   const partyName = (isSupplier ? supplier?.name : customer?.name) || partyLabel;
   const phone = (isSupplier ? supplier?.phone : customer?.phone) ?? null;
@@ -81,6 +88,7 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
     if (balanceBefore != null) lines.push(`${beforeLabel}: ${formatEGP(balanceBefore)}`);
     lines.push(`المبلغ المدفوع: ${formatEGP(payment.amount)}`);
     if (balanceAfter != null) lines.push(`${afterLabel}: ${formatEGP(balanceAfter)}`);
+    if (cancelled) lines.push("⚠️ هذه الدفعة ملغاة");
     lines.push("شكرًا لتعاملكم معنا 🙏");
     return lines.join("\n");
   }
@@ -106,7 +114,24 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
       rowsBefore: balanceBefore != null ? [{ label: beforeLabel, value: formatEGP(balanceBefore) }] : [],
       rowsAfter: balanceAfter != null ? [{ label: afterLabel, value: formatEGP(balanceAfter), danger: balanceAfter > 0 }] : [],
       note: payment.note,
+      cancelled,
     };
+  }
+
+  async function cancelPayment() {
+    if (!payment) return;
+    const who = isSupplier ? "المورد" : "العميل";
+    if (!window.confirm(`إلغاء الدفعة دي؟ المبلغ (${formatEGP(payment.amount)}) هيرجع على مديونية ${who}.`)) return;
+    setCancelling(true);
+    try {
+      await ops.cancelPayment(payment.id);
+      flash("تم إلغاء الدفعة");
+      await load();
+    } catch (e) {
+      flash(opError(e), 6000);
+    } finally {
+      setCancelling(false);
+    }
   }
 
   function downloadBlob(blob: Blob, filename: string) {
@@ -241,11 +266,23 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
 
         <div className="space-y-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              تم الدفع
-            </span>
+            {cancelled ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">
+                <XCircle className="h-3.5 w-3.5" />
+                ملغاة
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                تم الدفع
+              </span>
+            )}
           </div>
+          {cancelled && (
+            <div className="rounded-xl bg-red-50 p-3 text-center text-sm font-bold text-red-600 dark:bg-red-500/10 dark:text-red-300">
+              تم إلغاء هذه الدفعة، والمبلغ رجع على المديونية
+            </div>
+          )}
 
           <div className="space-y-1.5 rounded-2xl border border-gray-100 bg-white p-3 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <p className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-gray-100">
@@ -270,6 +307,18 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
               <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                 <PaymentMethodIcon method={method} className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 طريقة الدفع: {methodLabel}
+              </p>
+            )}
+            {createdByName && (
+              <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                <UserCheck className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
+                سجّلها: {createdByName}
+              </p>
+            )}
+            {cancelled && cancelledByName && (
+              <p className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-300">
+                <XCircle className="h-3.5 w-3.5 shrink-0" />
+                ألغاها: {cancelledByName}
               </p>
             )}
           </div>
@@ -308,6 +357,16 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
               طباعة
             </button>
           </div>
+          {brand.mode === "v2" && isOwner && !cancelled && (
+            <button
+              onClick={cancelPayment}
+              disabled={cancelling}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white py-3 text-sm font-bold text-red-600 active:bg-red-50 disabled:opacity-60 dark:border-red-500/30 dark:bg-gray-900 dark:text-red-300"
+            >
+              <XCircle className="h-4 w-4" />
+              {cancelling ? "جارِ الإلغاء..." : "إلغاء الدفعة"}
+            </button>
+          )}
           {notice && (
             <div className="rounded-xl bg-emerald-50 p-3 text-center text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
               {notice}
@@ -365,6 +424,7 @@ export default function PaymentReceiptPage({ params }: { params: { id: string } 
           )}
           {payment.note && <p>ملاحظة: {payment.note}</p>}
         </div>
+        {cancelled && <p className="mt-3 text-center text-sm font-extrabold">ملغاة</p>}
         <p className="mt-4 text-center text-xs">شكرًا لتعاملكم معنا</p>
       </div>
     </div>
