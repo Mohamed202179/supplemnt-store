@@ -68,6 +68,7 @@ export const ops = {
   customerPayment: (customerId: string, amount: number, note: string | null = null, method: string | null = null) =>
     rpc<string>("record_customer_payment", { p_customer_id: customerId, p_amount: amount, p_note: note, p_method: method }),
 
+  cancelPayment: (paymentId: string) => rpc("cancel_payment", { p_payment_id: paymentId }),
   supplierPayment: (supplierId: string, amount: number, note: string | null = null, method: string | null = null) =>
     rpc<string>("record_supplier_payment", { p_supplier_id: supplierId, p_amount: amount, p_note: note, p_method: method }),
 };
