@@ -22,6 +22,7 @@ export interface ReceiptImageData {
   rowsBefore: InvoiceImageRow[]; // المديونية قبل الدفعة
   rowsAfter: InvoiceImageRow[]; // المتبقي بعد الدفعة
   note: string | null;
+  cancelled?: boolean; // دفعة ملغاة: الشارة بتبقى "ملغاة" بالأحمر
 }
 
 const W = 900;
@@ -117,13 +118,13 @@ function paint(
     const chipH = 54;
     const cx = P;
     const cy = (HEADER_H - chipH) / 2;
-    ctx.fillStyle = "#e3f5cc";
+    ctx.fillStyle = d.cancelled ? "#fde2e0" : "#e3f5cc";
     roundRect(ctx, cx, cy, chipW, chipH, 27);
     ctx.fill();
-    ctx.fillStyle = "#2b5a05";
+    ctx.fillStyle = d.cancelled ? DANGER : "#2b5a05";
     ctx.textAlign = "center";
     ctx.font = font(700, 27);
-    ctx.fillText("تم الدفع", cx + chipW / 2, cy + 37);
+    ctx.fillText(d.cancelled ? "ملغاة" : "تم الدفع", cx + chipW / 2, cy + 37);
   }
   let y = HEADER_H + 40;
 
