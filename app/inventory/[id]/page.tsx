@@ -105,7 +105,7 @@ export default function ProductStockPage({ params }: { params: { id: string } })
             <StockBadge status={getStockStatus(product)} />
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className={`mt-3 grid gap-2 text-center text-xs ${isOwner ? "grid-cols-3" : "grid-cols-2"}`}>
             <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
               <p className="text-gray-400 dark:text-gray-500">الكمية الحالية</p>
               <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">{product.current_stock}</p>
@@ -114,12 +114,14 @@ export default function ProductStockPage({ params }: { params: { id: string } })
               <p className="text-gray-400 dark:text-gray-500">الحد الأدنى</p>
               <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">{product.min_stock}</p>
             </div>
-            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
-              <p className="text-gray-400 dark:text-gray-500">قيمة المخزون منه (بسعر الشراء)</p>
-              <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
-                {formatEGP(product.current_stock * product.purchase_price)}
-              </p>
-            </div>
+            {isOwner && (
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
+                <p className="text-gray-400 dark:text-gray-500">قيمة المخزون منه (بسعر الشراء)</p>
+                <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {formatEGP(product.current_stock * product.purchase_price)}
+                </p>
+              </div>
+            )}
           </div>
 
           {isOwner && (
