@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { formatEGP, getStockStatus, Product, ProductGroup } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import StockBadge from "@/components/StockBadge";
+import { useRole } from "@/components/RoleProvider";
 import { ChevronLeft, ChevronUp, ChevronDown, ShoppingBag, Package } from "lucide-react";
 
 // لا يوجد تنبيه صلاحية لمنتج مخزونه صفر (مفيش حاجة لسه موجودة تنتهي)
@@ -21,6 +22,7 @@ function ExpiryNote({ expiryDate, stock }: { expiryDate: string | null; stock: n
 }
 
 export default function InventoryPage() {
+  const { isOwner } = useRole(); // الكاشير مايشوفش أي أسعار شراء / تكلفة
   const [products, setProducts] = useState<Product[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [search, setSearch] = useState("");
@@ -120,13 +122,16 @@ export default function InventoryPage() {
       <PageHeader
         title="المخزون"
         action={
-          <Link href="/products/new" className="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-bold text-white">
-            + منتج جديد
-          </Link>
+          isOwner ? (
+            <Link href="/products/new" className="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-bold text-white">
+              + منتج جديد
+            </Link>
+          ) : undefined
         }
       />
 
       <div className="space-y-3 p-4">
+        {isOwner && (
         <div className="flex items-center justify-between rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm dark:bg-gray-900">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">إجمالي قيمة المخزون (بسعر الشراء)</p>
@@ -137,6 +142,7 @@ export default function InventoryPage() {
             <ChevronLeft className="h-3.5 w-3.5" />
           </Link>
         </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           <button
@@ -211,7 +217,7 @@ export default function InventoryPage() {
                         <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">
                           إجمالي الكمية: <b className="text-gray-800 dark:text-gray-200">{totalStock}</b>
                         </span>
-                        <span className="font-bold text-brand-700">{formatEGP(groupValue)}</span>
+                        {isOwner && <span className="font-bold text-brand-700">{formatEGP(groupValue)}</span>}
                       </div>
                     </div>
                     <span className="shrink-0 text-gray-300 dark:text-gray-600">
@@ -249,17 +255,19 @@ export default function InventoryPage() {
                               <ExpiryNote expiryDate={p.expiry_date} stock={p.current_stock} />
                             </div>
                           </div>
-                          <div className="mt-2 grid grid-cols-2 gap-2 text-center text-xs">
+                          <div className={`mt-2 grid gap-2 text-center text-xs ${isOwner ? "grid-cols-2" : "grid-cols-1"}`}>
                             <div className="rounded-lg bg-white dark:bg-gray-900 py-1.5">
                               <p className="text-gray-400 dark:text-gray-500">الكمية</p>
                               <p className="mt-0.5 font-bold text-gray-800 dark:text-gray-200">{p.current_stock}</p>
                             </div>
-                            <div className="rounded-lg bg-white dark:bg-gray-900 py-1.5">
-                              <p className="text-gray-400 dark:text-gray-500">الإجمالي (تكلفة)</p>
-                              <p className="mt-0.5 font-bold text-brand-700">
-                                {formatEGP(p.current_stock * p.purchase_price)}
-                              </p>
-                            </div>
+                            {isOwner && (
+                              <div className="rounded-lg bg-white dark:bg-gray-900 py-1.5">
+                                <p className="text-gray-400 dark:text-gray-500">الإجمالي (تكلفة)</p>
+                                <p className="mt-0.5 font-bold text-brand-700">
+                                  {formatEGP(p.current_stock * p.purchase_price)}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </Link>
                       ))}
@@ -299,7 +307,7 @@ export default function InventoryPage() {
                     <ExpiryNote expiryDate={p.expiry_date} stock={p.current_stock} />
                   </div>
                 </div>
-                <div className="mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 dark:border-gray-800 pt-2 text-center text-xs">
+                <div className={`mt-2 grid gap-2 border-t border-gray-100 dark:border-gray-800 pt-2 text-center text-xs ${isOwner ? "grid-cols-3" : "grid-cols-2"}`}>
                   <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
                     <p className="text-gray-400 dark:text-gray-500">الكمية</p>
                     <p className="mt-0.5 font-bold text-gray-800 dark:text-gray-200">{p.current_stock}</p>
@@ -308,10 +316,12 @@ export default function InventoryPage() {
                     <p className="text-gray-400 dark:text-gray-500">الحد الأدنى</p>
                     <p className="mt-0.5 font-bold text-gray-800 dark:text-gray-200">{p.min_stock}</p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
-                    <p className="text-gray-400 dark:text-gray-500">الإجمالي (سعر الشراء)</p>
-                    <p className="mt-0.5 font-bold text-brand-700">{formatEGP(p.current_stock * p.purchase_price)}</p>
-                  </div>
+                  {isOwner && (
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-800 py-2">
+                      <p className="text-gray-400 dark:text-gray-500">الإجمالي (سعر الشراء)</p>
+                      <p className="mt-0.5 font-bold text-brand-700">{formatEGP(p.current_stock * p.purchase_price)}</p>
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}
