@@ -129,6 +129,13 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             </div>
           </div>
 
+          <Link
+            href={`/customers/${customer.id}/statement`}
+            className="mt-3 flex w-full items-center justify-center rounded-xl border border-brand-600 py-3 text-sm font-bold text-brand-700 active:bg-brand-50 dark:text-brand-300"
+          >
+            كشف حساب (طباعة / مشاركة)
+          </Link>
+
           {customer.current_debt > 0 && (
             <button
               onClick={() => setShowPayment((s) => !s)}
